@@ -1,0 +1,107 @@
+:root {
+    --primary-color: #4f46e5;
+    --error-color: #ef4444;
+    --text-dark: #1f2937;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: var(--bg-gradient);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card {
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+h2 {
+    color: var(--text-dark);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+p {
+    color: #6b7280;
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.input-field {
+    margin-bottom: 20px;
+}
+
+.input-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.input-field input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.input-field input:focus {
+    border-color: var(--primary-color);
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.alert-box {
+    background: #fef2f2;
+    color: var(--error-color);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: none;
+    border: 1px solid #fee2e2;
+}
+
+/* Telefonlar uchun moslashuv */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 30px 20px;
+    }
+}

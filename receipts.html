@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chek chiqarish - Admin Panel</title>
+    <link rel="stylesheet" href="css/admin-shared.css">
+    <link rel="stylesheet" href="css/receipts.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="logo">Project 2026</div>
+    <nav class="menu-list">
+        <a href="admin_panel.html" class="menu-item">Admin panel</a>
+        <a href="receipts.html" class="menu-item active">Chek chiqarish</a>
+        <a href="autoschool.html" class="menu-item">Avtomaktab</a>
+        <a href="instructor.html" class="menu-item">Instruktor</a>
+        <a href="control.html" class="menu-item">Nazorat</a>
+        <a href="#" onclick="logout()" class="menu-item" style="margin-top: 50px; color: #ef4444;">Chiqish</a>
+    </nav>
+</aside>
+
+<main class="main-content">
+    <header>
+        <h1>Chek chiqarish tizimi</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div id="themeToggle" class="theme-switch-wrapper">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark Mode</span>
+            </div>
+            <div class="user-info" id="adminNameDisplay">Yuklanmoqda...</div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+
+        <section class="form-wrapper">
+            <div class="card">
+                <h3 class="section-title">Mijoz ma'lumotlari</h3>
+                <form id="receiptForm">
+                    <div class="form-group">
+                        <label for="fullName">F.I.O</label>
+                        <input type="text" id="fullName" placeholder="Ism va familya..." required pattern="[A-Za-z\s']+" title="Faqat harflar kiriting">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="centerSelect">O'quv markazni tanlang</label>
+                        <select id="centerSelect" required>
+                            <option value="">Yuklanmoqda...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categorySelect">Toifa</label>
+                        <select id="categorySelect" required>
+                            <option value="A toifa">A toifa</option>
+                            <option value="B toifa">B toifa</option>
+                            <option value="C toifa">C toifa</option>
+                            <option value="BC toifa">BC toifa</option>
+                            <option value="CD toifa">CD toifa</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="groupInput">Guruh</label>
+                        <input type="text" id="groupInput" placeholder="Guruh raqami..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hourSelect">Shug'ullanish soati</label>
+                        <select id="hourSelect" required>
+                            <option value="60">1 soat (60 min)</option>
+                            <option value="120">2 soat (120 min)</option>
+                            <option value="180">3 soat (180 min)</option>
+                            <option value="240">4 soat (240 min)</option>
+                            <option value="300">5 soat (300 min)</option>
+                            <option value="360">6 soat (360 min)</option>
+                            <option value="420">7 soat (420 min)</option>
+                            <option value="480">8 soat (480 min)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentAmount">To'lov miqdori</label>
+                        <input type="number" id="paymentAmount" placeholder="Summani kiriting..." required min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentType">To'lov turi</label>
+                        <select id="paymentType" required>
+                            <option value="Naqd">Naqd</option>
+                            <option value="Karta">Karta</option>
+                            <option value="Pul o'tkazish">Pul o'tkazish</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="saveAndPrintBtn">
+                        Ma'lumotlarni saqlash hamda chek chiqarish
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section class="table-wrapper">
+            <div class="card">
+                <h3 class="section-title">Ro'yxatga olingan chek ma'lumotlari</h3>
+                <div class="scrollable-table">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>F.I.O</th>
+                            <th>Markaz</th>
+                            <th>Toifa</th>
+                            <th>Guruh</th>
+                            <th>Soat</th>
+                            <th>Summa</th>
+                            <th>Tur</th>
+                            <th>Vaqt</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div id="printSection" class="printable-area">
+    <div class="receipt-box">
+        <h2 class="receipt-title">TASH INDEX AVTADROM</h2>
+        <div class="receipt-divider">--------------------------------</div>
+        <div class="receipt-info">
+            <p><strong>Chek ID:</strong> <span id="p-id"></span></p>
+            <p><strong>Mijoz:</strong> <span id="p-name"></span></p>
+            <p><strong>Markaz:</strong> <span id="p-center"></span></p>
+            <p><strong>Toifa:</strong> <span id="p-category"></span></p>
+            <p><strong>Dars vaqti:</strong> <span id="p-minutes"></span> min</p>
+            <p><strong>To'lov:</strong> <span id="p-amount"></span> so'm</p>
+            <p><strong>Tur:</strong> <span id="p-type"></span></p>
+            <p><strong>Sana:</strong> <span id="p-date"></span></p>
+        </div>
+        <div class="receipt-divider">--------------------------------</div>
+        <div id="qrcodeContainer"></div>
+        <p class="receipt-footer">Xaridingiz uchun rahmat!</p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/receipts.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nazorat - Project 2026</title>
+    <link rel="stylesheet" href="css/admin-shared.css">
+    <link rel="stylesheet" href="css/control.css">
+</head>
+<body>
+<aside class="sidebar">
+    <div class="logo">Project 2026</div>
+    <nav class="menu-list">
+        <a href="admin_panel.html" class="menu-item">Admin panel</a>
+        <a href="receipts.html" class="menu-item">Chek chiqarish</a>
+        <a href="autoschool.html" class="menu-item">Avtomaktab</a>
+        <a href="instructor.html" class="menu-item">Instruktor</a>
+        <a href="control.html" class="menu-item active">Nazorat</a>
+        <a href="#" onclick="logout()" class="menu-item" style="margin-top: 50px; color: #ef4444;">Chiqish</a>
+    </nav>
+</aside>
+
+<main class="main-content">
+    <header>
+        <h1>Umumiy Nazorat</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div id="themeToggle" class="theme-switch-wrapper">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark Mode</span>
+            </div>
+            <div class="user-info" id="adminNameDisplay">Yuklanmoqda...</div>
+        </div>
+    </header>
+
+    <div class="filter-bar">
+        <input type="text" id="studentSearch" placeholder="Talaba ismini qidirish...">
+        <select id="groupFilter">
+            <option value="all">Barcha guruhlar</option>
+        </select>
+        <select id="statusFilter">
+            <option value="all">Barcha holatlar</option>
+            <option value="paid">To'lov qilgan</option>
+            <option value="debt">Qarzdorlik bor</option>
+        </select>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Talaba</th>
+                <th>Guruh</th>
+                <th>Jami to'lov</th>
+                <th>Qarzdorlik</th>
+                <th>Holat</th>
+                <th>Batafsil</th>
+            </tr>
+            </thead>
+            <tbody id="controlTableBody">
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/control.js"></script>
+</body>
+</html>

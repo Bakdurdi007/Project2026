@@ -1,0 +1,179 @@
+:root {
+    --sidebar-width: 260px;
+    --primary-color: #4f46e5;
+
+    /* Light Mode o'zgaruvchilari */
+    --bg-color: #f9fafb;
+    --sidebar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --text-main: #111827;
+    --text-muted: #4b5563;
+    --border-color: #e5e7eb;
+    --hover-bg: #f3f4ff;
+}
+
+/* Dark Mode o'zgaruvchilari (Rasmda ko'ringan dizayn asosida) */
+body.dark-mode {
+    --bg-color: #0b1120;      /* Juda to'q ko'k fon */
+    --sidebar-bg: #111827;   /* Sidebar foni */
+    --card-bg: #1e293b;      /* Bloklar (karta) foni */
+    --text-main: #f8fafc;    /* Asosiy matn oqish */
+    --text-muted: #94a3b8;   /* Yordamchi matn kulrang */
+    --border-color: #1e293b; /* Chiziqlar */
+    --hover-bg: #1e293b;     /* Elementlar ustiga borgandagi rang */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    display: flex;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    transition: background-color 0.3s ease; /* Rang almashishi silliq bo'lishi uchun */
+}
+
+/* Sidebar dizayni */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 40px;
+    padding-left: 10px;
+}
+
+.menu-list { list-style: none; flex-grow: 1; }
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--text-muted);
+    border-radius: 10px;
+    margin-bottom: 5px;
+    transition: 0.3s;
+}
+
+.menu-item:hover, .menu-item.active {
+    background: var(--hover-bg);
+    color: var(--primary-color);
+}
+
+.menu-item i { margin-right: 12px; width: 20px; }
+
+/* O'ng tomon kontent */
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 30px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.user-info { font-weight: 600; color: var(--text-main); }
+
+/* Theme Toggle (Rejimni o'zgartirish tugmasi) uchun dizayn */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--text-main);
+    transition: 0.3s;
+}
+
+.theme-switch-wrapper:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Jadvallar va kartalar uchun umumiy klasslarni yangilash */
+.stat-card, .table-container, .info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+/* Admin design*/
+/* --- USER INFO KONTEYNERI --- */
+.user-info {
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* DEFAULT (LIGHT MODE) - Oq rejim uchun */
+    background-color: rgba(0, 0, 0, 0.05); /* Yengil kulrang fon */
+    color: #1e293b !important;           /* To'q ko'k matn (endi ko'rinadi!) */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Onlayn indikatori (yashil nuqta) */
+.user-info::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    background-color: #10b981; /* Yashil rang */
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* --- DARK MODE HOLATI --- */
+/* JS kodingizdagi body.classList.add('dark-mode') ga moslangan */
+body.dark-mode .user-info {
+    background-color: rgba(255, 255, 255, 0.1); /* Shaffof oqish fon */
+    color: #ffffff !important;                 /* Oq matn */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .user-info::before {
+    background-color: #34d399; /* Dark modeda biroz yorqinroq yashil */
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+}
+
+/* Hover effekti - foydalanuvchi ustiga kelganda */
+.user-info:hover {
+    transform: translateY(-1px);
+    cursor: default;
+}
+
+/* White modeda hover bo'lganda fon biroz to'qlashadi */
+body:not(.dark-mode) .user-info:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Dark modeda hover bo'lganda fon biroz yorqinlashadi */
+body.dark-mode .user-info:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}

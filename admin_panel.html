@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Bosh sahifa</title>
+    <link rel="stylesheet" href="css/admin-shared.css">
+    <link rel="stylesheet" href="css/admin-home.css">
+</head>
+<body>
+<aside class="sidebar">
+    <div class="logo">Project 2026</div>
+    <nav class="menu-list">
+        <a href="admin_panel.html" class="menu-item active">Admin panel</a>
+        <a href="receipts.html" class="menu-item">Chek chiqarish</a>
+        <a href="autoschool.html" class="menu-item">Avtomaktab</a>
+        <a href="instructor.html" class="menu-item">Instruktor</a>
+        <a href="control.html" class="menu-item">Nazorat</a>
+        <a href="#" onclick="logout()" class="menu-item" style="margin-top: 50px; color: #ef4444;">Chiqish</a>
+    </nav>
+</aside>
+
+<main class="main-content">
+    <header>
+        <h1 id="pageTitle">Admin Panel</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div id="themeToggle" class="theme-switch-wrapper">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark Mode</span>
+            </div>
+            <div class="user-info" id="adminNameDisplay">Yuklanmoqda...</div>
+        </div>
+    </header>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <h3>Adminlar soni</h3>
+            <p id="count-admins">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Instruktorlar soni</h3>
+            <p id="count-instructors">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Bugungi cheklar</h3>
+            <p id="count-checks">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Bugungi cheklar</h3>
+            <p id="count-money">0</p>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <h3>Instruktorlar hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
+                <div style="width: 67%;">
+                    <select id="report-period-instructor" style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <option value="1day">1 kunlik hisobot</option>
+                        <option value="1week">1 haftalik hisobot</option>
+                        <option value="1month">1 oylik hisobot</option>
+                        <option value="1year">1 yillik hisobot</option>
+                    </select>
+                </div>
+                <div style="width: 30%;">
+                    <button onclick="" style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
+                        Hisobotni chiqarish
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Chek hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
+                <div style="width: 67%;">
+                    <select id="report-period" style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <option value="1day">1 kunlik hisobot</option>
+                        <option value="1week">1 haftalik hisobot</option>
+                        <option value="1month">1 oylik hisobot</option>
+                        <option value="1year">1 yillik hisobot</option>
+                    </select>
+                </div>
+                <div style="width: 30%;">
+                    <button onclick="generateProfessionalReport()" style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
+                        Hisobotni chiqarish
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="report-print-section" style="display: none;"></div>
+    </section>
+
+    <section class="admin-report-container">
+        <div class="report-card">
+            <div class="report-header">
+                <div class="header-left">
+                    <h2>TIZIM ADMINLARI</h2>
+                </div>
+                <div class="header-right">
+                    <span class="total-badge" id="report-admins">0</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>F.I.SH</th>
+                        <th>Cheklar soni</th>
+                        <th>Login</th>
+                        <th>Yaratilgan vaqt</th>
+                    </tr>
+                    </thead>
+                    <tbody id="adminsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/admin_panel.js"></script>
+</body>
+</html>

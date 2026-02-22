@@ -1,0 +1,81 @@
+/* Filtrlar paneli */
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.filter-bar input, .filter-bar select {
+    background: var(--bg-color);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.filter-bar input { flex-grow: 1; }
+
+.filter-bar input:focus { border-color: var(--primary-color); }
+
+/* Jadval va statuslar */
+.table-container {
+    background: var(--card-bg);
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: var(--hover-bg);
+    color: var(--text-muted);
+    text-align: left;
+    padding: 15px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 14px;
+}
+
+/* Holat belgilari (Badges) */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-paid { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-debt { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+.view-btn {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.3s;
+}
+
+.view-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}

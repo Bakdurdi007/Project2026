@@ -1,0 +1,187 @@
+/* Asosiy konteyner layout (30/70) */
+.dashboard-container {
+    display: flex;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.form-wrapper {
+    flex: 0 0 30%;
+}
+
+.table-wrapper {
+    flex: 0 0 70%;
+}
+
+/* Card va Umumiy qismlar */
+.card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.section-title {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: var(--text-main);
+    border-left: 4px solid var(--primary-color);
+    padding-left: 10px;
+}
+
+/* Forma elementlari */
+#receiptForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+#receiptForm input,
+#receiptForm select {
+    background: var(--bg-color);
+    color: var(--text-main);
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    transition: 0.3s ease;
+}
+
+#receiptForm input:focus,
+#receiptForm select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(92, 92, 241, 0.1);
+}
+
+/* Asosiy tugma */
+.submit-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+.submit-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+/* Jadval stili */
+.scrollable-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: var(--hover-bg);
+    text-align: left;
+    padding: 15px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+/* Status ranglari */
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-used {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* CHOP ETISH UCHUN STIL (80mm Thermal Printer) */
+.printable-area {
+    display: none; /* Sahifada ko'rinmaydi */
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .printable-area, .printable-area * {
+        visibility: visible;
+    }
+    .printable-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm; /* Standart chek o'lchami */
+        padding: 5mm;
+        background: white;
+        color: black;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .receipt-box {
+        text-align: center;
+        width: 100%;
+    }
+    .receipt-title {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    .receipt-divider {
+        margin: 5px 0;
+    }
+    .receipt-info {
+        text-align: left;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    .receipt-info p {
+        margin: 3px 0;
+    }
+    #qrcodeContainer {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+    }
+    .receipt-footer {
+        font-size: 12px;
+        margin-top: 10px;
+    }
+}

@@ -1,0 +1,206 @@
+/* Statistika gridi */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+/* Har bir statistika kartasi */
+.stat-card {
+    background: var(--card-bg);
+    color: var(--text-main);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    /* Transform transitiondan olib tashlandi */
+    transition: box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-card:hover {
+    /* transform: translateY(-5px); <-- Olib tashlandi (sakrashni yo'qotish uchun) */
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.15);
+    border-color: var(--primary-color);
+}
+
+/* Karta ichidagi sarlavha */
+.stat-card h3 {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Karta ichidagi katta raqamlar */
+.stat-card p {
+    color: var(--text-main);
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Qo'shimcha vidjet (jadval yoki faollik bloki) */
+.recent-activity {
+    margin-top: 40px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.recent-activity h2 {
+    font-size: 18px;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .main-content {
+        padding: 20px;
+    }
+}
+
+/* Admin table desigan*/
+/* Asosiy konteyner */
+.admin-report-container {
+    margin-top: 30px;
+}
+
+/* Oq kartochka (Default) */
+.report-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Sarlavha qismi */
+.report-header {
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-left h2 { font-size: 18px; color: #1e293b; margin: 0; }
+.header-icon { font-size: 20px; }
+
+.total-badge {
+    background: #4f46e5;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+/* Jadval stili */
+.table-responsive { overflow-x: auto; }
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background: #f8fafc;
+    padding: 15px 25px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.modern-table td {
+    padding: 15px 25px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 14px;
+}
+
+/* Rangli elementlar */
+.id-circle {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    background: #6366f1;
+    color: white;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.ticket-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    font-weight: 600;
+}
+
+/* --- DARK MODE --- */
+body.dark-mode .report-card {
+    background: #1e293b;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .report-header { border-bottom-color: rgba(255, 255, 255, 0.05); }
+body.dark-mode .header-left h2 { color: #f1f5f9; }
+
+body.dark-mode .modern-table th {
+    background: rgba(255, 255, 255, 0.02);
+    color: #94a3b8;
+}
+
+body.dark-mode .modern-table td {
+    color: #cbd5e1;
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+@media print {
+    body * { display: none !important; }
+    #report-print-section, #report-print-section * { display: block !important; }
+
+    #report-print-section {
+        font-family: "Times New Roman", serif;
+        padding: 20px;
+    }
+
+    .report-title { font-size: 14pt; font-weight: normal; }
+    .report-value { font-size: 14pt; font-weight: bold; }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        margin-bottom: 30px;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+        font-size: 12pt;
+    }
+
+    th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizimga kirish</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-card">
+        <h2>Kirish</h2>
+        <p>Admin yoki Instructor sifatida tizimga kiring</p>
+
+        <form id="loginForm">
+            <div class="input-field">
+                <label>Telefon raqami (Login)</label>
+                <input type="text" id="phone" placeholder="998901234567" maxlength="12" required>
+            </div>
+
+            <div class="input-field">
+                <label>Parol</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <div id="error-message" class="alert-box"></div>
+
+            <button type="submit" id="submitBtn">Tizimga kirish</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>
