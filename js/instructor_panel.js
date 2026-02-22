@@ -81,6 +81,13 @@ function showCountdown(stopTime) {
 
 // 3. Skanerlash logikasi
 function startScanner() {
+    // Kutubxona yuklanganini tekshirish
+    if (typeof Html5QrCode === 'undefined') {
+        console.error("QR kutubxonasi hali yuklanmadi, 1 soniyadan keyin qayta urunib ko'ramiz...");
+        setTimeout(startScanner, 1000); // Qayta urinish
+        return;
+    }
+
     const readerElem = document.getElementById("reader");
     if (!readerElem) return;
 
@@ -88,7 +95,11 @@ function startScanner() {
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
     html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-        .catch(err => console.error("Skaner ishga tushmadi:", err));
+        .catch(err => {
+            console.error("Skaner ishga tushmadi:", err);
+            // Agar kamera topilmasa yoki ruxsat berilmasa xabar chiqarish
+            document.getElementById('reader').innerHTML = `<p class="p-4 text-red-500 text-center text-xs">Kamera topilmadi yoki ruxsat berilmadi.</p>`;
+        });
 }
 
 async function onScanSuccess(decodedText) {
