@@ -81,25 +81,60 @@ function showCountdown(stopTime) {
 
 // 3. Skanerlash logikasi
 function startScanner() {
-    // Kutubxona yuklanganini tekshirish
+    // 1. Kutubxona yuklanganini tekshirish
     if (typeof Html5QrCode === 'undefined') {
-        console.error("QR kutubxonasi hali yuklanmadi, 1 soniyadan keyin qayta urunib ko'ramiz...");
-        setTimeout(startScanner, 1000); // Qayta urinish
+        console.warn("QR kutubxonasi yuklanishi kutilmoqda...");
+        setTimeout(startScanner, 1000);
         return;
     }
 
     const readerElem = document.getElementById("reader");
     if (!readerElem) return;
 
-    html5QrCode = new Html5QrCode("reader");
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    // 2. Agar skaner allaqachon ishlayotgan bo'lsa, uni to'xtatib keyin yangidan boshlaymiz
+    // Bu "Already scanning" xatosini oldini oladi
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            executeScannerStart();
+        }).catch(err => console.error("To'xtatishda xato:", err));
+    } else {
+        executeScannerStart();
+    }
+}
 
-    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-        .catch(err => {
-            console.error("Skaner ishga tushmadi:", err);
-            // Agar kamera topilmasa yoki ruxsat berilmasa xabar chiqarish
-            document.getElementById('reader').innerHTML = `<p class="p-4 text-red-500 text-center text-xs">Kamera topilmadi yoki ruxsat berilmadi.</p>`;
-        });
+// Skanerni ishga tushiruvchi asosiy qism
+function executeScannerStart() {
+    const readerElem = document.getElementById("reader");
+    html5QrCode = new Html5QrCode("reader");
+
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0 // Skaner kvadrat shaklda bo'lishi uchun
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" }, // Orqa kamera
+        config,
+        onScanSuccess
+    ).catch(err => {
+        console.error("Skaner ishga tushmadi:", err);
+
+        // Kamera ruxsati yoki HTTPS muammosi bo'lsa foydalanuvchiga xabar berish
+        let errorMsg = "Kamera topilmadi yoki ruxsat berilmadi.";
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            errorMsg = "Xatolik: Kamera faqat HTTPS xavfsiz ulanishda ishlaydi!";
+        }
+
+        readerElem.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                <i data-lucide="camera-off" class="w-10 h-10 text-red-500 mb-2"></i>
+                <p class="text-red-500 text-xs">${errorMsg}</p>
+                <button onclick="location.reload()" class="mt-4 bg-slate-700 px-3 py-1 rounded text-[10px]">Qayta urinish</button>
+            </div>
+        `;
+        lucide.createIcons(); // Ikonkani chizish uchun
+    });
 }
 
 async function onScanSuccess(decodedText) {
