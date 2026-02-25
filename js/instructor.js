@@ -58,7 +58,7 @@ async function fetchInstructors() {
                 <div class="action-buttons">
                     <button onclick="viewInstructor(${ins.id})" class="btn-icon view" title="Ko'rish">👁️</button>
                     <button id="edit-btn-${ins.id}" class="btn-icon edit" title="Tahrirlash">✏️</button>
-                    <button onclick="openDeleteModal(${ins.id})" class="btn-icon delete" title="O'chirish">🗑️</button>
+                    <button onclick="openDeleteModal(${ins.id}, ${ins.status})" class="btn-icon delete" title="O'chirish">🗑️</button>
                 </div>
             </td>
         `;
@@ -110,6 +110,12 @@ async function handleFormSubmit(e) {
 
 // --- TAHRIRLASH ---
 function editInstructor(ins) {
+    // Holatni tekshirish: agar band (false) bo'lsa, tahrirlashga ruxsat bermaslik
+    if (ins.status === false) {
+        showAlert("Hozir instructor band", "error");
+        return;
+    }
+
     document.getElementById('instructorId').value = ins.id;
     document.getElementById('fullName').value = ins.full_name;
     document.getElementById('carNumber').value = ins.car_number;
@@ -122,7 +128,15 @@ function editInstructor(ins) {
 
 // --- O'CHIRISH ---
 let deleteTargetId = null;
-function openDeleteModal(id) {
+
+// Funksiyaga status parametri qo'shildi
+function openDeleteModal(id, status) {
+    // Holatni tekshirish: agar band (false) bo'lsa, o'chirishga ruxsat bermaslik
+    if (status === false) {
+        showAlert("Hozir instructor band", "error");
+        return;
+    }
+
     deleteTargetId = id;
     document.getElementById('deleteModal').style.display = 'flex';
 }
