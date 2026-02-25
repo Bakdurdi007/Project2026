@@ -65,6 +65,116 @@ async function updateDashboardStats() {
     }
 }
 
+async function generateReport() {
+    const period = document.getElementById('report-period-instructor').value;
+
+    // 1. Ma'lumotlarni ustun nomlariga moslash
+    const columnMap = {
+        '1day': { time: 'daily_minute', money: 'daily_money', label: 'Kunlik' },
+        '1week': { time: 'weekly_minute', money: 'weekly_money', label: 'Haftalik' },
+        '1month': { time: 'monthly_minute', money: 'monthly_money', label: 'Oylik' },
+        '1year': { time: 'annual_minute', money: 'annual_money', label: 'Yillik' }
+    };
+
+    const selected = columnMap[period];
+
+    // 2. Supabase'dan ma'lumotlarni olish (Join orqali)
+    // Eslatma: 'supabase' o'zgaruvchisi loyihangizda tashabbus qilingan bo'lishi kerak
+    const { data: instructors, error } = await supabase
+        .from('instructors')
+        .select(`
+            id, 
+            full_name, 
+            car_number, 
+            source,
+            reports (
+                ${selected.time},
+                ${selected.money},
+                cashback_money
+            )
+        `);
+
+    if (error) {
+        console.error("Xatolik:", error);
+        alert("Ma'lumotlarni yuklashda xatolik yuz berdi");
+        return;
+    }
+
+    // 3. Hisobot oynasini yaratish
+    const printWindow = window.open('', '_blank');
+
+    let tableRows = '';
+    instructors.forEach((inst, index) => {
+        const report = inst.reports?.[0] || {};
+        const timeValue = report[selected.time] || 0;
+        const moneyValue = report[selected.money] || 0;
+
+        // Keshbek mantig'i: faqat 'hamkor' bo'lsa hisoblanadi
+        const cashbackValue = inst.source === 'hamkor' ? (report.cashback_money || 0) : 0;
+
+        tableRows += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${inst.full_name}</td>
+                <td>${inst.car_number}</td>
+                <td>${inst.source}</td>
+                <td>${timeValue} min</td>
+                <td>${moneyValue.toLocaleString()} so'm</td>
+                <td>${cashbackValue.toLocaleString()} so'm</td>
+            </tr>
+        `;
+    });
+
+    // 4. A4 formatdagi HTML shablon
+    const htmlContent = `
+        <html>
+        <head>
+            <title>Instruktorlar Hisoboti - ${selected.label}</title>
+            <style>
+                body { font-family: 'Arial', sans-serif; padding: 20px; }
+                h2 { text-align: center; color: #333; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
+                th { background-color: #f3f4f6; color: #333; }
+                tr:nth-child(even) { background-color: #fafafa; }
+                .footer { margin-top: 30px; text-align: right; font-size: 10px; }
+                @media print {
+                    @page { size: A4; margin: 15mm; }
+                    button { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Instruktorlar uchun ${selected.label} hisobot</h2>
+            <p>Sana: ${new Date().toLocaleDateString()}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Instructor to'liq ismi</th>
+                        <th>Mashina raqami</th>
+                        <th>Hamkorlik turi</th>
+                        <th>Vaqti</th>
+                        <th>Daromad (so'm)</th>
+                        <th>Keshbek (so'm)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            <div class="footer">
+                <p>Hisobot avtomatik tarzda yaratildi: ${new Date().toLocaleString()}</p>
+            </div>
+            <script>window.print();<\/script>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+}
+
 // Admin table info
 async function loadAdminsReport() {
     const tbody = document.getElementById('adminsTableBody');

@@ -32,33 +32,40 @@
         </div>
     </header>
 
-    <div class="filter-bar">
-        <input type="text" id="studentSearch" placeholder="Talaba ismini qidirish...">
-        <select id="groupFilter">
-            <option value="all">Barcha guruhlar</option>
-        </select>
-        <select id="statusFilter">
-            <option value="all">Barcha holatlar</option>
-            <option value="paid">To'lov qilgan</option>
-            <option value="debt">Qarzdorlik bor</option>
-        </select>
+    <div class="monitoring-section">
+        <div class="section-header">
+            <h2>Ish faoliyati nazorati</h2>
+            <span class="subtitle">JONLI NAZORAT PANELI (REAL-TIME MONITORING)</span>
+        </div>
+
+        <div class="table-container">
+            <table class="monitoring-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Instruktor</th>
+                    <th>Mashina</th>
+                    <th>Holati</th>
+                    <th>Qolgan vaqt</th>
+                    <th>Amallar</th>
+                    <th>Chek ID</th>
+                </tr>
+                </thead>
+                <tbody id="monitoringTableBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-            <tr>
-                <th>Talaba</th>
-                <th>Guruh</th>
-                <th>Jami to'lov</th>
-                <th>Qarzdorlik</th>
-                <th>Holat</th>
-                <th>Batafsil</th>
-            </tr>
-            </thead>
-            <tbody id="controlTableBody">
-            </tbody>
-        </table>
+    <div id="endLessonModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Diqqat!</h3>
+            <p>Siz rostdan ham instruktor mashg'ulotini tugatmoqchimisiz?</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeEndLessonModal()">Yo'q</button>
+                <button class="btn-confirm-yellow" id="confirmEndBtn">Ha</button>
+            </div>
+        </div>
     </div>
 </main>
 
