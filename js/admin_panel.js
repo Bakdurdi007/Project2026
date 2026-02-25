@@ -80,7 +80,7 @@ async function generateReport() {
 
     // 2. Supabase'dan ma'lumotlarni olish (Join orqali)
     // Eslatma: 'supabase' o'zgaruvchisi loyihangizda tashabbus qilingan bo'lishi kerak
-    const { data: instructors, error } = await supabase
+    const { data: instructors, error } = await _supabase
         .from('instructors')
         .select(`
             id, 
