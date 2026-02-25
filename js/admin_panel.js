@@ -66,9 +66,9 @@ async function updateDashboardStats() {
 }
 
 async function generateReport() {
+    // Period tanlash
     const period = document.getElementById('report-period-instructor').value;
 
-    // 1. Ma'lumotlarni ustun nomlariga moslash
     const columnMap = {
         '1day': { time: 'daily_minute', money: 'daily_money', label: 'Kunlik' },
         '1week': { time: 'weekly_minute', money: 'weekly_money', label: 'Haftalik' },
@@ -78,101 +78,246 @@ async function generateReport() {
 
     const selected = columnMap[period];
 
-    // 2. Supabase'dan ma'lumotlarni olish (Join orqali)
-    // Eslatma: 'supabase' o'zgaruvchisi loyihangizda tashabbus qilingan bo'lishi kerak
-    const { data: instructors, error } = await _supabase
-        .from('instructors')
-        .select(`
-            id, 
-            full_name, 
-            car_number, 
-            source,
-            reports (
-                ${selected.time},
-                ${selected.money},
-                cashback_money
-            )
-        `);
+    try {
+        // MA'LUMOTLARNI OLISH
+        // reports!instructor_id (...) - bu qism bazadagi instruktor_id orqali bog'lanishni aniq ko'rsatadi
+        const { data: instructors, error } = await _supabase
+            .from('instructors')
+            .select(`
+                id, full_name, car_number, source,
+                reports!instructor_id (
+                    daily_minute, daily_money,
+                    weekly_minute, weekly_money,
+                    monthly_minute, monthly_money,
+                    annual_minute, annual_money,
+                    cashback_money
+                )
+            `);
 
-    if (error) {
-        console.error("Xatolik:", error);
-        alert("Ma'lumotlarni yuklashda xatolik yuz berdi");
-        return;
-    }
 
-    // 3. Hisobot oynasini yaratish
-    const printWindow = window.open('', '_blank');
 
-    let tableRows = '';
-    instructors.forEach((inst, index) => {
-        const report = inst.reports?.[0] || {};
-        const timeValue = report[selected.time] || 0;
-        const moneyValue = report[selected.money] || 0;
+        if (error) throw error;
 
-        // Keshbek mantig'i: faqat 'hamkor' bo'lsa hisoblanadi
-        const cashbackValue = inst.source === 'hamkor' ? (report.cashback_money || 0) : 0;
+        let tableRows = '';
+        let totalMoney = 0;
+        let totalCashback = 0;
 
-        tableRows += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${inst.full_name}</td>
-                <td>${inst.car_number}</td>
-                <td>${inst.source}</td>
-                <td>${timeValue} min</td>
-                <td>${moneyValue.toLocaleString()} so'm</td>
-                <td>${cashbackValue.toLocaleString()} so'm</td>
-            </tr>
+        // Ma'lumotlarni qayta ishlash
+        instructors.forEach((inst, index) => {
+            // SQL sxemangizga ko'ra har bir instruktorda bitta report bo'ladi (Primary Key: instructor_id)
+            // Eski kodingiz:
+// const report = inst.reports?.[0] || {};
+
+// O'zgartirilishi kerak bo'lgan yangi kod:
+            const rawReport = inst.reports;
+            const report = Array.isArray(rawReport) ? (rawReport[0] || {}) : (rawReport || {});
+
+            const timeValue = report[selected.time] || 0;
+            const moneyValue = parseFloat(report[selected.money] || 0);
+            const cashbackBase = parseFloat(report.cashback_money || 0);
+
+            // Keshbek faqat 'hamkor' uchun hisoblanadi
+            const cashbackValue = inst.source === 'hamkor' ? cashbackBase : 0;
+
+            totalMoney += moneyValue;
+            totalCashback += cashbackValue;
+
+            tableRows += `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td><b>${inst.full_name || '-'}</b></td>
+                    <td style="text-align: center;">${inst.car_number || '-'}</td>
+                    <td style="text-align: center;"><span class="badge ${inst.source}">${inst.source || 'oddiy'}</span></td>
+                    <td style="text-align: center;">${timeValue} min</td>
+                    <td style="text-align: right;">${moneyValue.toLocaleString()} so'm</td>
+                    <td style="text-align: right;">${cashbackValue.toLocaleString()} so'm</td>
+                </tr>
+            `;
+        });
+
+        // Yashirin iframe yaratish (about:blank oynasidan qochish uchun)
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const htmlContent = `
+            <html>
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+                    
+                    body { 
+                        font-family: 'Inter', sans-serif; 
+                        padding: 40px; 
+                        color: #1e293b;
+                        line-height: 1.5;
+                    }
+
+                    .header-container {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        margin-bottom: 40px;
+                        border-bottom: 2px solid #f1f5f9;
+                        padding-bottom: 20px;
+                    }
+
+                    .title-section h1 {
+                        margin: 0;
+                        font-size: 24px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        color: #0f172a;
+                    }
+
+                    .meta-info {
+                        text-align: right;
+                        font-size: 13px;
+                        color: #64748b;
+                    }
+
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin-top: 10px;
+                    }
+
+                    th { 
+                        background-color: #f8fafc;
+                        color: #475569;
+                        font-weight: 600;
+                        font-size: 12px;
+                        text-transform: uppercase;
+                        border-top: 1px solid #e2e8f0;
+                        border-bottom: 2px solid #e2e8f0;
+                        padding: 15px 10px;
+                    }
+
+                    td { 
+                        padding: 12px 10px;
+                        font-size: 13px;
+                        border-bottom: 1px solid #f1f5f9;
+                    }
+
+                    tr:nth-child(even) { background-color: #fcfcfc; }
+
+                    .badge {
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                    }
+                    .hamkor { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+                    .filial { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+                    .summary-section {
+                        margin-top: 20px;
+                        display: flex;
+                        justify-content: flex-end;
+                    }
+
+                    .summary-table { width: 320px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
+                    .summary-table td { border: none; padding: 8px; }
+                    .total-row { font-weight: 700; font-size: 16px; color: #4f46e5; border-top: 1px solid #e2e8f0 !important; }
+
+                    .signature-section {
+                        margin-top: 60px;
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .sig-line {
+                        border-top: 1px solid #94a3b8;
+                        width: 200px;
+                        margin-top: 40px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #64748b;
+                    }
+
+                    @media print {
+                        body { padding: 0; }
+                        @page { size: A4; margin: 15mm; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header-container">
+                    <div class="title-section">
+                        <h1>Instruktorlar Hisoboti</h1>
+                        <p style="margin: 5px 0; color: #6366f1; font-weight: 600;">${selected.label.toUpperCase()} KO'RSATKICHLAR</p>
+                    </div>
+                    <div class="meta-info">
+                        <p><b>Hujjat №:</b> IR-${Date.now().toString().slice(-6)}</p>
+                        <p><b>Sana:</b> ${new Date().toLocaleDateString('uz-UZ')}</p>
+                        <p><b>Vaqt:</b> ${new Date().toLocaleTimeString('uz-UZ')}</p>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">№</th>
+                            <th style="text-align: left;">F.I.SH</th>
+                            <th>Mashina</th>
+                            <th>Turi</th>
+                            <th>Vaqti</th>
+                            <th style="text-align: right;">Daromad</th>
+                            <th style="text-align: right;">Keshbek</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+
+                <div class="summary-section">
+                    <table class="summary-table">
+                        <tr>
+                            <td>Umumiy daromad:</td>
+                            <td style="text-align: right;">${totalMoney.toLocaleString()} so'm</td>
+                        </tr>
+                        <tr>
+                            <td>Umumiy keshbek:</td>
+                            <td style="text-align: right;">- ${totalCashback.toLocaleString()} so'm</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>SOF FOYDA (JAMI):</td>
+                            <td style="text-align: right;">${(totalMoney - totalCashback).toLocaleString()} so'm</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="signature-section">
+                    <div>
+                        <p>Mas'ul shaxs:</p>
+                        <div class="sig-line">(imzo va F.I.SH)</div>
+                    </div>
+                    <div>
+                        <p>Tasdiqlayman:</p>
+                        <div class="sig-line">M.P.</div>
+                    </div>
+                </div>
+            </body>
+            </html>
         `;
-    });
 
-    // 4. A4 formatdagi HTML shablon
-    const htmlContent = `
-        <html>
-        <head>
-            <title>Instruktorlar Hisoboti - ${selected.label}</title>
-            <style>
-                body { font-family: 'Arial', sans-serif; padding: 20px; }
-                h2 { text-align: center; color: #333; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
-                th { background-color: #f3f4f6; color: #333; }
-                tr:nth-child(even) { background-color: #fafafa; }
-                .footer { margin-top: 30px; text-align: right; font-size: 10px; }
-                @media print {
-                    @page { size: A4; margin: 15mm; }
-                    button { display: none; }
-                }
-            </style>
-        </head>
-        <body>
-            <h2>Instruktorlar uchun ${selected.label} hisobot</h2>
-            <p>Sana: ${new Date().toLocaleDateString()}</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>№</th>
-                        <th>Instructor to'liq ismi</th>
-                        <th>Mashina raqami</th>
-                        <th>Hamkorlik turi</th>
-                        <th>Vaqti</th>
-                        <th>Daromad (so'm)</th>
-                        <th>Keshbek (so'm)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
-            <div class="footer">
-                <p>Hisobot avtomatik tarzda yaratildi: ${new Date().toLocaleString()}</p>
-            </div>
-            <script>window.print();<\/script>
-        </body>
-        </html>
-    `;
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+        // Chop etish oynasini chaqirish
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            document.body.removeChild(iframe);
+        }, 600);
+
+    } catch (err) {
+        console.error("Xatolik:", err);
+        alert("Hisobot yaratishda xatolik yuz berdi. Konsolni tekshiring.");
+    }
 }
 
 // Admin table info
