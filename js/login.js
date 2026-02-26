@@ -86,3 +86,15 @@ function showError(msg) {
         alert(msg);
     }
 }
+
+window.addEventListener('load', function() {
+    // 10 soniya (10000 millisoniya) kutish
+    setTimeout(function() {
+        // Preloader'ni sekin yashirish uchun opacity ishlatsa ham bo'ladi,
+        // bu yerda to'g'ridan-to'g'ri display:none qildik
+        document.getElementById('preloader').style.display = 'none';
+
+        // Asosiy sahifani ko'rsatish
+        document.getElementById('main-content').style.display = 'block';
+    }, 10000);
+});

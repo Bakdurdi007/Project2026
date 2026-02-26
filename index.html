@@ -8,14 +8,26 @@
 </head>
 <body>
 
+<div id="preloader">
+    <div class="loader-content">
+        <img src="img/logo.png" alt="Logo" class="spinning-logo">
+        <p class="loading-text">Loading...</p>
+        <div class="loading-bar-container">
+            <div class="loading-bar"></div>
+        </div>
+    </div>
+</div>
+
 <div class="login-container">
     <div class="login-card">
+        <div class="logo-wrapper" style="text-align: center;">
+            <img src="img/logoB.png" alt="Tash Index Logo" class="form-logo">
+        </div>
         <h2>Kirish</h2>
-        <p>Admin yoki Instructor sifatida tizimga kiring</p>
-
+        <p>Admin sifatida tizimga kiring</p>
         <form id="loginForm">
             <div class="input-field">
-                <label>Telefon raqami (Login)</label>
+                <label>Telefon raqami</label>
                 <input type="text" id="phone" placeholder="998901234567" maxlength="12" required>
             </div>
 
