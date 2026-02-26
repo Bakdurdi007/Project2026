@@ -279,11 +279,11 @@ async function generateReport() {
                         </tr>
                         <tr>
                             <td>Umumiy keshbek:</td>
-                            <td style="text-align: right;">- ${totalCashback.toLocaleString()} so'm</td>
+                            <td style="text-align: right;">+ ${totalCashback.toLocaleString()} so'm</td>
                         </tr>
                         <tr class="total-row">
-                            <td>SOF FOYDA (JAMI):</td>
-                            <td style="text-align: right;">${(totalMoney - totalCashback).toLocaleString()} so'm</td>
+                            <td>JAMIY SUMMA:</td>
+                            <td style="text-align: right;">${(totalMoney + totalCashback).toLocaleString()} so'm</td>
                         </tr>
                     </table>
                 </div>
