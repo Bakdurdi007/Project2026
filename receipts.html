@@ -7,6 +7,30 @@
     <link rel="stylesheet" href="css/admin-shared.css">
     <link rel="stylesheet" href="css/receipts.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Jadvaldagi chek chiqarish tugmasi uchun dizayn */
+        .print-qr-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        .print-qr-btn:hover {
+            background-color: #2563eb;
+        }
+        .print-qr-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
 </head>
 <body>
 <aside class="sidebar">
@@ -117,7 +141,7 @@
                             <th>Summa</th>
                             <th>Tur</th>
                             <th>Vaqt</th>
-                        </tr>
+                            <th>QR chek</th> </tr>
                         </thead>
                         <tbody id="ticketsTableBody">
                         </tbody>

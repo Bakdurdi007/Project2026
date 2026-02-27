@@ -7,6 +7,9 @@ const ticketsTableBody = document.getElementById('ticketsTableBody');
 const centerSelect = document.getElementById('centerSelect');
 const adminNameDisplay = document.getElementById('adminNameDisplay');
 
+// Yuklangan cheklarni saqlab turish uchun massiv (qaytadan chek chiqarish uchun kerak)
+let allLoadedTickets = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     // Admin ismini chiqarish
     const name = localStorage.getItem('userName') || 'Admin';
@@ -51,12 +54,15 @@ async function fetchTickets() {
         return;
     }
 
+    allLoadedTickets = data; // Olingan ma'lumotlarni saqlab qo'yamiz
+
     if (ticketsTableBody) {
         ticketsTableBody.innerHTML = '';
         data.forEach(item => {
             const statusClass = item.is_active ? 'status-active' : 'status-used';
             const statusText = item.is_active ? 'Active' : 'Used';
 
+            // Jadval qatoriga yangi tugma qo'shildi
             const row = `
                 <tr>
                     <td><strong>${item.full_name}</strong></td>
@@ -67,6 +73,11 @@ async function fetchTickets() {
                     <td>${Number(item.payment_amount).toLocaleString()}</td>
                     <td><span class="${statusClass}">${statusText}</span></td>
                     <td>${new Date(item.created_at).toLocaleString('uz-UZ', {hour12: false})}</td>
+                    <td>
+                        <button onclick="reprintExistingTicket('${item.id}')" class="print-qr-btn">
+                            🖨️ Chek
+                        </button>
+                    </td>
                 </tr>
             `;
             ticketsTableBody.insertAdjacentHTML('beforeend', row);
@@ -147,6 +158,17 @@ function printReceiptLogic(ticket) {
         window.print();
     }, 500);
 }
+
+// 5. Yangi funksiya: Jadvaldan turib chekni qayta chop etish
+window.reprintExistingTicket = function(ticketId) {
+    // ID bo'yicha chekni topamiz
+    const ticketToPrint = allLoadedTickets.find(t => t.id == ticketId);
+    if (ticketToPrint) {
+        printReceiptLogic(ticketToPrint);
+    } else {
+        alert("Ushbu chek ma'lumotlari topilmadi!");
+    }
+};
 
 // Chiqish funksiyasi
 function logout() {
