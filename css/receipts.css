@@ -142,12 +142,10 @@ td {
     /* Brauzer qo'shadigan ortiqcha tepa/pastki ma'lumotlarni o'chirish */
     @page {
         margin: 0;
-        size: auto; /* Qog'oz o'lchamini avtomatik kontentga moslash */
     }
 
-    body {
-        margin: 0;
-        padding: 0;
+    body * {
+        visibility: hidden;
     }
 
     .printable-area, .printable-area * {
