@@ -139,49 +139,69 @@ td {
 }
 
 @media print {
-    body * {
-        visibility: hidden;
+    /* Brauzer qo'shadigan ortiqcha tepa/pastki ma'lumotlarni o'chirish */
+    @page {
+        margin: 0;
+        size: auto; /* Qog'oz o'lchamini avtomatik kontentga moslash */
     }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
     .printable-area, .printable-area * {
         visibility: visible;
     }
+
     .printable-area {
         display: block !important;
         position: absolute;
         left: 0;
         top: 0;
-        width: 80mm; /* Standart chek o'lchami */
+        width: 80mm;
+        height: auto; /* QAT'IY BALANDLIK OLIB TASHLANDI - Avtomatik moslashadi */
         padding: 5mm;
+        padding-bottom: 10mm; /* Printer qog'ozni kesishidan oldin joy qoldirish */
         background: white;
         color: black;
         font-family: 'Courier New', Courier, monospace;
     }
+
     .receipt-box {
         text-align: center;
         width: 100%;
     }
+
     .receipt-title {
         font-size: 18px;
         margin-bottom: 5px;
     }
+
     .receipt-divider {
         margin: 5px 0;
+        border-bottom: 1px dashed black; /* Ajratuvchi chiziq yaxshiroq ko'rinishi uchun */
     }
+
     .receipt-info {
         text-align: left;
         font-size: 14px;
         line-height: 1.4;
     }
+
     .receipt-info p {
         margin: 3px 0;
     }
+
     #qrcodeContainer {
         display: flex;
         justify-content: center;
         margin: 15px 0;
     }
+
     .receipt-footer {
         font-size: 12px;
         margin-top: 10px;
+        text-align: center;
     }
 }
