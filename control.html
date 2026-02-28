@@ -38,6 +38,24 @@
             <span class="subtitle">JONLI NAZORAT PANELI (REAL-TIME MONITORING)</span>
         </div>
 
+        <div class="monitoring-tools">
+            <div class="stats-wrapper">
+                <div class="stat-card free">
+                    <span class="stat-label">Bo'sh instruktorlar</span>
+                    <span id="freeCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-card busy">
+                    <span class="stat-label">Band instruktorlar</span>
+                    <span id="busyCount" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="carSearchInput" placeholder="Mashina raqami (masalan: 01...)">
+                <button class="btn-search" onclick="fetchMonitoringData()">Izlash</button>
+            </div>
+        </div>
+
         <div class="table-container">
             <table class="monitoring-table">
                 <thead>

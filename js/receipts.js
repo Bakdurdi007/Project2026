@@ -65,6 +65,7 @@ async function fetchTickets() {
             // Jadval qatoriga yangi tugma qo'shildi
             const row = `
                 <tr>
+                    <td>${item.id}</td>
                     <td><strong>${item.full_name}</strong></td>
                     <td>${item.center_name}</td>
                     <td>${item.direction_category}</td>

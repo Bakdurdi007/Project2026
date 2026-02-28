@@ -115,9 +115,34 @@ function editInstructor(ins) {
 
 // --- JONLI NAZORAT PANELI FUNKSIYASI ---
 async function fetchMonitoringData() {
-    // 1. Instruktorlarni olish
-    const { data: instructors, error } = await _supabase.from('instructors').select('*').order('id', { ascending: true });
-    if (error) return;
+    const carSearchInput = document.getElementById('carSearchInput');
+    const carSearchTerm = carSearchInput ? carSearchInput.value.trim() : '';
+
+    // 1. Instruktorlarni olish (Barcha instruktorlar statistika uchun kerak)
+    let query = _supabase.from('instructors').select('*').order('id', { ascending: true });
+
+    const { data: allInstructors, error } = await query;
+    if (error) {
+        console.error("Xatolik:", error);
+        return;
+    }
+
+    // --- STATISTIKA HISOBLASH ---
+    const freeCount = allInstructors.filter(i => i.status === true).length;
+    const busyCount = allInstructors.filter(i => i.status === false).length;
+
+    // UI'da statistikani yangilash
+    if(document.getElementById('freeCount')) document.getElementById('freeCount').innerText = freeCount;
+    if(document.getElementById('busyCount')) document.getElementById('busyCount').innerText = busyCount;
+
+    // --- QIDIRUV FILTRI ---
+    // Agar qidiruv maydonida matn bo'lsa, jadval uchun ma'lumotni saralaymiz
+    let instructors = allInstructors;
+    if (carSearchTerm) {
+        instructors = allInstructors.filter(ins =>
+            ins.car_number && ins.car_number.toLowerCase().includes(carSearchTerm.toLowerCase())
+        );
+    }
 
     // 2. Navbatdagi faol chiptani topish
     const { data: nextTicket } = await _supabase
@@ -138,10 +163,10 @@ async function fetchMonitoringData() {
         ticketsData = t || [];
     }
 
-    // --- SARALASH MANTIQI ---
+    // --- SARALASH MANTIQI (Sizning original kodingiz) ---
     const sortedInstructors = instructors.map(ins => {
-        let remainingMinutes = 9999; // Bo'shlar uchun juda katta son (tartibda birinchi chiqishi uchun)
-        let priority = 1; // 1: Bo'sh, 2: <= 10min, 3: > 10min
+        let remainingMinutes = 9999;
+        let priority = 1;
 
         if (ins.active_ticket_id) {
             const tInfo = ticketsData.find(t => t.id === ins.active_ticket_id);
@@ -153,18 +178,17 @@ async function fetchMonitoringData() {
                 remainingMinutes = (endTime - now) / (1000 * 60);
 
                 if (remainingMinutes <= 10) {
-                    priority = 2; // Tugashiga 10 min yoki undan kam qolgan
+                    priority = 2;
                 } else {
-                    priority = 3; // 10 min dan ko'p qolgan
+                    priority = 3;
                 }
             }
         } else {
-            priority = 1; // Haqiqatdan bo'sh instruktorlar
+            priority = 1;
         }
 
         return { ...ins, priority, remainingMinutes };
     }).sort((a, b) => {
-        // Avval priority bo'yicha (1, 2, 3), keyin qolgan vaqt bo'yicha saralash
         if (a.priority !== b.priority) return a.priority - b.priority;
         return a.remainingMinutes - b.remainingMinutes;
     });
@@ -181,7 +205,11 @@ async function fetchMonitoringData() {
         window.activeTimers = [];
     }
 
-    // Saralangan ro'yxatni ekranga chiqarish
+    // Saralangan ro'yxatni ekranga chiqarish (Sizning original kodingiz)
+    if (sortedInstructors.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Instruktor topilmadi</td></tr>`;
+    }
+
     sortedInstructors.forEach((ins, idx) => {
         const row = document.createElement('tr');
         const carClass = ins.source === 'hamkor' ? 'car-hamkor' : 'car-filial';
@@ -203,13 +231,19 @@ async function fetchMonitoringData() {
         if (ins.active_ticket_id) {
             const tInfo = ticketsData.find(t => t.id === ins.active_ticket_id);
             if (tInfo) {
-                // startLiveTimer funksiyasi vaqtni hisoblab ekranga chiqaradi
                 const timerId = startLiveTimer(tInfo.lesson_start_time, tInfo.minute, timerEl);
                 activeTimers.push(timerId);
             }
         }
     });
 }
+
+// "Enter" tugmasini bosganda qidiruv ishlashi uchun
+document.getElementById('carSearchInput')?.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        fetchMonitoringData();
+    }
+});
 
 // --- TAYMERNI DINAMIK MINUT BILAN ISHLATISH ---
 function startLiveTimer(startTimeIso, plannedMinutes, element) {
