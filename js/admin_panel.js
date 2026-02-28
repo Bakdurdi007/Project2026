@@ -532,3 +532,56 @@ async function generateProfessionalReport() {
         }
     }
 }
+
+async function getDailyStats() {
+    // 1. Bugungi kunning boshlanish vaqtini aniqlash (00:00:00)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfToday = today.toISOString();
+
+    // 2. Supabase'dan faqat bugungi ma'lumotlarni tortib olish
+    // 'created_at' o'rniga o'zingizdagi sana ustuni nomini yozishingiz mumkin
+    const { data: tickets, error } = await _supabase
+        .from('tickets')
+        .select('payment_type, payment_amount')
+        .gte('created_at', startOfToday);
+
+    if (error) {
+        console.error("Ma'lumotlarni olishda xatolik:", error);
+        return;
+    }
+
+    // 3. Boshlang'ich qiymatlarni belgilash
+    let stats = {
+        "Naqd": { count: 0, sum: 0 },
+        "Karta": { count: 0, sum: 0 },
+        "Pul o'tkazish": { count: 0, sum: 0 }
+    };
+
+    // 4. Olingan ma'lumotlarni turlarga qarab hisoblash
+    tickets.forEach(ticket => {
+        const type = ticket.payment_type;
+        const amount = Number(ticket.payment_amount) || 0;
+
+        if (stats[type]) {
+            stats[type].count += 1;
+            stats[type].sum += amount;
+        }
+    });
+
+    // 5. HTML (DOM) elementlarni yangilash va raqamlarni chiroyli formatlash
+    // Naqd
+    document.getElementById('count-cash').innerText = stats["Naqd"].count + " ta";
+    document.getElementById('summa-cash').innerText = stats["Naqd"].sum.toLocaleString() + " so'm";
+
+    // Karta
+    document.getElementById('count-card').innerText = stats["Karta"].count + " ta";
+    document.getElementById('summa-card').innerText = stats["Karta"].sum.toLocaleString() + " so'm";
+
+    // Pul o'tkazish
+    document.getElementById('count-transfer').innerText = stats["Pul o'tkazish"].count + " ta";
+    document.getElementById('summa-transfer').innerText = stats["Pul o'tkazish"].sum.toLocaleString() + " so'm";
+}
+
+// Sahifa yuklanganda funksiyani ishga tushirish
+document.addEventListener('DOMContentLoaded', getDailyStats);
