@@ -29,18 +29,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- MA'LUMOTLARNI OLISH ---
-async function fetchInstructors() {
+// --- QIDIRUV TUGMASI UCHUN HODISALAR ---
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('phoneSearchInput');
+
+    if(searchBtn && searchInput) {
+        // 1. Tugma bosilganda izlash
+        searchBtn.addEventListener('click', () => {
+            const searchTerm = searchInput.value.trim();
+            fetchInstructors(searchTerm);
+        });
+
+        // 2. Kiritish maydonida "Enter" bosilganda izlash
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = searchInput.value.trim();
+                fetchInstructors(searchTerm);
+            }
+        });
+
+        // 3. Input tozalanganda (masalan hamma raqamni o'chirib tashlasa) avtomatik yana hammani chiqarish
+        searchInput.addEventListener('input', (e) => {
+            if(e.target.value.trim() === '') {
+                fetchInstructors('');
+            }
+        });
+    }
+});
+
+async function fetchInstructors(searchTerm = '') {
+    // 1. Avval barcha ma'lumotni olamiz (filtrsiz)
     const { data, error } = await _supabase
         .from('instructors')
         .select('*')
         .order('id', { ascending: false });
 
     const tbody = document.getElementById('instructorsTableBody');
-    if (!tbody || error) return;
+    if (!tbody || error) {
+        if(error) console.error("Xatolik:", error);
+        return;
+    }
+
+    // 2. JS orqali filtrlash (Bu usulda cast xatosi bo'lmaydi)
+    let filteredData = data;
+    if (searchTerm) {
+        filteredData = data.filter(ins => {
+            // Loginni stringga aylantirib, ichida searchTerm borligini tekshiramiz
+            return String(ins.login).includes(searchTerm);
+        });
+    }
+
     tbody.innerHTML = '';
 
-    data.forEach(ins => {
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Ma'lumot topilmadi</td></tr>`;
+        return;
+    }
+
+    // 3. Filtrlangan ma'lumotni ekranga chiqaramiz
+    filteredData.forEach(ins => {
         const statusClass = ins.status ? 'status-active' : 'status-inactive';
         const statusText = ins.status ? 'Bo`sh' : 'Band';
         const typeClass = ins.source === 'hamkor' ? 'type-hamkor' : 'type-filial';

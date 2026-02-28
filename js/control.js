@@ -115,10 +115,11 @@ function editInstructor(ins) {
 
 // --- JONLI NAZORAT PANELI FUNKSIYASI ---
 async function fetchMonitoringData() {
+    // 1. Instruktorlarni olish
     const { data: instructors, error } = await _supabase.from('instructors').select('*').order('id', { ascending: true });
     if (error) return;
 
-    // Navbatdagi faol chiptani topish
+    // 2. Navbatdagi faol chiptani topish
     const { data: nextTicket } = await _supabase
         .from('tickets')
         .select('id')
@@ -130,7 +131,6 @@ async function fetchMonitoringData() {
     let ticketsData = [];
 
     if (activeIds.length > 0) {
-        // DIQQAT: Bu yerda 'minute' ustunini ham qo'shib oldik
         const { data: t } = await _supabase
             .from('tickets')
             .select('id, lesson_start_time, minute')
@@ -138,15 +138,51 @@ async function fetchMonitoringData() {
         ticketsData = t || [];
     }
 
+    // --- SARALASH MANTIQI ---
+    const sortedInstructors = instructors.map(ins => {
+        let remainingMinutes = 9999; // Bo'shlar uchun juda katta son (tartibda birinchi chiqishi uchun)
+        let priority = 1; // 1: Bo'sh, 2: <= 10min, 3: > 10min
+
+        if (ins.active_ticket_id) {
+            const tInfo = ticketsData.find(t => t.id === ins.active_ticket_id);
+            if (tInfo) {
+                const startTime = new Date(tInfo.lesson_start_time).getTime();
+                const durationMs = (tInfo.minute || 0) * 60 * 1000;
+                const endTime = startTime + durationMs;
+                const now = new Date().getTime();
+                remainingMinutes = (endTime - now) / (1000 * 60);
+
+                if (remainingMinutes <= 10) {
+                    priority = 2; // Tugashiga 10 min yoki undan kam qolgan
+                } else {
+                    priority = 3; // 10 min dan ko'p qolgan
+                }
+            }
+        } else {
+            priority = 1; // Haqiqatdan bo'sh instruktorlar
+        }
+
+        return { ...ins, priority, remainingMinutes };
+    }).sort((a, b) => {
+        // Avval priority bo'yicha (1, 2, 3), keyin qolgan vaqt bo'yicha saralash
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.remainingMinutes - b.remainingMinutes;
+    });
+
     const tbody = document.getElementById('monitoringTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     // Eski taymerlarni tozalash
-    activeTimers.forEach(clearInterval);
-    activeTimers = [];
+    if (typeof activeTimers !== 'undefined') {
+        activeTimers.forEach(clearInterval);
+        activeTimers = [];
+    } else {
+        window.activeTimers = [];
+    }
 
-    instructors.forEach((ins, idx) => {
+    // Saralangan ro'yxatni ekranga chiqarish
+    sortedInstructors.forEach((ins, idx) => {
         const row = document.createElement('tr');
         const carClass = ins.source === 'hamkor' ? 'car-hamkor' : 'car-filial';
         const statusClass = ins.status ? 'status-free' : 'status-busy';
@@ -166,8 +202,11 @@ async function fetchMonitoringData() {
         const timerEl = document.getElementById(`mon-timer-${ins.id}`);
         if (ins.active_ticket_id) {
             const tInfo = ticketsData.find(t => t.id === ins.active_ticket_id);
-            // Endi funksiyaga tInfo.minute qiymatini ham yuboramiz
-            if (tInfo) startLiveTimer(tInfo.lesson_start_time, tInfo.minute, timerEl);
+            if (tInfo) {
+                // startLiveTimer funksiyasi vaqtni hisoblab ekranga chiqaradi
+                const timerId = startLiveTimer(tInfo.lesson_start_time, tInfo.minute, timerEl);
+                activeTimers.push(timerId);
+            }
         }
     });
 }
