@@ -9,32 +9,38 @@ function formatTime(isoString) {
 // searchQuery parametrini qo'shdik (sukut bo'yicha bo'sh matn)
 async function fetchInstructors(searchQuery = "") {
     try {
+        // 1. Bugungi kunning boshlanish va tugash vaqtini aniqlash (UTC bo'yicha)
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+
         // Instruktorlarni olish uchun asosiy so'rov
         let query = _supabase
             .from('instructors')
             .select('id, full_name, car_number')
             .eq('source', 'hamkor');
 
-        // AGAR QIDIRUV MATNI BO'LSA, MASHINA RAQAMI BO'YICHA IZLASH QO'SHILADI
         if (searchQuery) {
             query = query.ilike('car_number', `%${searchQuery}%`);
         }
 
-        // O'zgartirilgan (yoki o'zgartirilmagan) so'rovni ishga tushirish
         const { data: instructors, error: instError } = await query;
-
         if (instError) throw instError;
 
-        // BAZADAN BARCHA AMALLARNI OLISH (Jami vaqt va faol sessiyalar uchun)
+        // BAZADAN FAQAT BUGUNGI AMALLARNI OLISH
+        // .gte (greater than or equal) - dan katta yoki teng (bugun 00:00:00)
+        // .lte (less than or equal) - dan kichik yoki teng (bugun 23:59:59)
         const { data: allPartnerRecords, error: partnerError } = await _supabase
             .from('partner')
-            .select('id, instructor_id, start_time, stop_time, estimated_time');
+            .select('id, instructor_id, start_time, stop_time, estimated_time')
+            .gte('start_time', startOfToday)
+            .lte('start_time', endOfToday);
 
         if (partnerError) throw partnerError;
 
         // Ma'lumotlarni saralash (Xarita yaratish)
-        const activeMap = {}; // Hozir ishlayotganlar
-        const totalTimeMap = {}; // Har bir instruktor uchun jami minutlar
+        const activeMap = {};
+        const totalTimeMap = {};
 
         allPartnerRecords.forEach(record => {
             const instId = record.instructor_id;
@@ -44,7 +50,7 @@ async function fetchInstructors(searchQuery = "") {
                 activeMap[instId] = record;
             }
 
-            // 2. Jami vaqtni hisoblash (estimated_time bor bo'lsa)
+            // 2. Jami vaqtni hisoblash (Faqat bugungi recordlar kelgani uchun hammasini qo'shsak bo'ladi)
             if (record.estimated_time) {
                 totalTimeMap[instId] = (totalTimeMap[instId] || 0) + parseFloat(record.estimated_time);
             }
@@ -53,7 +59,6 @@ async function fetchInstructors(searchQuery = "") {
         const tbody = document.getElementById('monitoringTableBody');
         tbody.innerHTML = '';
 
-        // Agar ma'lumot topilmasa, foydalanuvchiga bildirish
         if (instructors.length === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Ma\'lumot topilmadi</td></tr>';
             return;
@@ -64,12 +69,10 @@ async function fetchInstructors(searchQuery = "") {
             const currentSession = activeMap[instructor.id];
             const totalTime = totalTimeMap[instructor.id] || 0;
 
-            // Umumiy qator qurilishi
             let actionBtnHTML = "";
             let startTimeHTML = "--:--";
 
             if (currentSession) {
-                // AGAR FAOL BO'LSA
                 actionBtnHTML = `
                     <button id="btn-${instructor.id}" class="btn-stop" 
                         onclick="stopAction(${instructor.id}, ${currentSession.id}, '${currentSession.start_time}')">
@@ -77,7 +80,6 @@ async function fetchInstructors(searchQuery = "") {
                     </button>`;
                 startTimeHTML = formatTime(currentSession.start_time);
             } else {
-                // AGAR BO'SH BO'LSA
                 actionBtnHTML = `
                     <button id="btn-${instructor.id}" class="btn-start" 
                         onclick="startAction(${instructor.id})">
