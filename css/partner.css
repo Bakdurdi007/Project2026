@@ -1,0 +1,188 @@
+/* Jadval va statuslar */
+.table-container {
+    background: var(--card-bg);
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: var(--hover-bg);
+    color: var(--text-muted);
+    text-align: left;
+    padding: 15px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 14px;
+}
+
+
+/* --- Jonli Nazorat Paneli Dizayni --- */
+.monitoring-section {
+    background-color: #1a2235; /* Rasmga mos to'q ko'k fon */
+    border-radius: 12px;
+    padding: 20px;
+    color: #a0aec0;
+    font-family: Arial, sans-serif;
+    margin-top: 20px;
+}
+
+.section-header h2 {
+    color: #fff;
+    border-left: 4px solid #3b82f6;
+    padding-left: 10px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: #3b82f6;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.table-container {
+    background-color: #202940;
+    border-radius: 8px;
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
+.monitoring-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.monitoring-table th {
+    background-color: #242f48;
+    color: #fff;
+    padding: 15px;
+    font-size: 13px;
+}
+
+.monitoring-table td {
+    padding: 15px;
+    border-bottom: 1px solid #2d3748;
+    color: #fff;
+    vertical-align: middle;
+}
+
+/* Monitoring asboblar paneli */
+.monitoring-tools {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 10px 5px;
+}
+
+/* Qidiruv bo'limi */
+.search-container {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 5px 5px 5px 15px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#carSearchInput {
+    border: none;
+    outline: none;
+    padding: 8px;
+    width: 220px;
+    font-size: 14px;
+}
+
+.btn-search {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-search:hover { background: #2563eb; }
+/* Mashina raqami uchun dizayn (Rasmdagidek) */
+.car-number-badge {
+    color: #ff4d4f; /* Qizil rang */
+    border: 1.5px solid #ff4d4f;
+    border-radius: 8px; /* Burchaklarni yumaloqlash */
+    padding: 4px 12px;
+    font-weight: bold;
+    display: inline-block;
+    font-family: monospace; /* Raqamlar aniqroq ko'rinishi uchun */
+}
+
+/* Boshlash tugmasi uchun dizayn */
+.btn-start {
+    background-color: #28a745; /* Yashil rang */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-start:hover {
+    background-color: #218838; /* Sitchqoncha borganda to'qlashadi */
+}
+/* Boshlash tugmasi */
+.btn-start {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-start:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+/* To'xtatish tugmasi (Sariq) */
+.btn-stop {
+    background-color: #ffc107;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-stop:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+}
+
+/* Kutish holati */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

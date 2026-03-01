@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nazorat - Project 2026</title>
     <link rel="stylesheet" href="css/admin-shared.css">
-    <link rel="stylesheet" href="css/control.css">
+    <link rel="stylesheet" href="css/partner.css">
 </head>
 <body>
 <aside class="sidebar">
@@ -15,8 +15,8 @@
         <a href="receipts.html" class="menu-item">Chek chiqarish</a>
         <a href="autoschool.html" class="menu-item">Avtomaktab</a>
         <a href="instructor.html" class="menu-item">Instruktor</a>
-        <a href="control.html" class="menu-item active">Nazorat</a>
-        <a href="partner.html" class="menu-item">Hamkorlar nazorati</a>
+        <a href="control.html" class="menu-item">Nazorat</a>
+        <a href="partner.html" class="menu-item active">Hamkorlar nazorati</a>
         <a href="#" onclick="logout()" class="menu-item" style="margin-top: 50px; color: #ef4444;">Chiqish</a>
     </nav>
 </aside>
@@ -40,20 +40,9 @@
         </div>
 
         <div class="monitoring-tools">
-            <div class="stats-wrapper">
-                <div class="stat-card free">
-                    <span class="stat-label">Bo'sh instruktorlar</span>
-                    <span id="freeCount" class="stat-value">0</span>
-                </div>
-                <div class="stat-card busy">
-                    <span class="stat-label">Band instruktorlar</span>
-                    <span id="busyCount" class="stat-value">0</span>
-                </div>
-            </div>
-
             <div class="search-container">
                 <input type="text" id="carSearchInput" placeholder="Mashina raqami (masalan: 01...)">
-                <button class="btn-search" onclick="fetchMonitoringData()">Izlash</button>
+                <button class="btn-search" onclick="handleSearch()">Izlash</button>
             </div>
         </div>
 
@@ -65,9 +54,10 @@
                     <th>Instruktor</th>
                     <th>Mashina</th>
                     <th>Holati</th>
-                    <th>Qolgan vaqt</th>
-                    <th>Amallar</th>
-                    <th>Chek ID</th>
+                    <th>Boshlash vaqti</th>
+                    <th>Tugash vaqti</th>
+                    <th>Umumiy vaqti</th>
+                    <th>Hisoblangan vaqti</th>
                 </tr>
                 </thead>
                 <tbody id="monitoringTableBody">
@@ -90,6 +80,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
-<script src="js/control.js"></script>
+<script src="js/partner.js"></script>
 </body>
 </html>
