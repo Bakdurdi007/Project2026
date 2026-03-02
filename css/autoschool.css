@@ -1,4 +1,6 @@
-/* Asosiy Grid: Forma 400px, Jadval qolgan barcha joyni oladi */
+/* =========================================
+   ASOSIYLAR VA GRID YERLASHUVI
+========================================= */
 .content-grid-dashboard {
     display: grid;
     grid-template-columns: 400px 1fr;
@@ -7,7 +9,6 @@
     align-items: start;
 }
 
-/* Kartalar stili */
 .info-card, .list-card {
     background: var(--card-bg, #ffffff);
     border: 1px solid var(--border-color, #e2e8f0);
@@ -16,7 +17,17 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
-/* --- FORMA DIZAYNI --- */
+.info-card h3, .list-card h3 {
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+    color: var(--primary-color, #4f46e5);
+    border-left: 4px solid var(--primary-color);
+    padding-left: 15px;
+}
+
+/* =========================================
+   FORMA DIZAYNI
+========================================= */
 .input-group {
     margin-bottom: 20px;
     text-align: left;
@@ -59,7 +70,9 @@
     box-shadow: 0 8px 15px rgba(79, 70, 229, 0.3);
 }
 
-/* --- JADVAL DIZAYNI --- */
+/* =========================================
+   JADVAL DIZAYNI
+========================================= */
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -90,6 +103,25 @@ td {
     white-space: nowrap;
 }
 
+tbody tr {
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+tbody tr:hover {
+    background-color: var(--hover-bg, #f1f5f9);
+    cursor: pointer;
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: inset 4px 0 0 0 var(--primary-color);
+}
+
+[data-theme="dark"] tbody tr:hover td {
+    color: #ffffff;
+}
+
 .action-icons {
     display: flex;
     gap: 15px;
@@ -106,140 +138,71 @@ td {
     transform: scale(1.25);
 }
 
-/* --- MODALLAR (ASOSIY) --- */
-.modal-btn {
-    padding: 10px 25px;
-    border-radius: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: 0.2s;
-}
-
-/* Alert Modal uchun maxsus qo'shimchalar */
-#alertContent {
-    border-top: 6px solid #f59e0b; /* Standart sariq */
-}
-
-/* Alert turiga qarab tepa chiziq ranglari */
-.alert-success-border { border-top-color: #10b981 !important; }
-.alert-error-border { border-top-color: #ef4444 !important; }
-.alert-warning-border { border-top-color: #f59e0b !important; }
-
-#alertModal[style*="display: flex"] .modal-content {
-    transform: scale(1);
-    opacity: 1;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-}
-
-/* Tugma ranglari */
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; }
-
-.btn-success { background: #10b981; color: white; }
-.btn-success:hover { background: #059669; }
-
-.btn-secondary { background: #64748b; color: white; margin-top: 20px; width: 100%; }
-
-/* Responsive */
-@media (max-width: 1100px) {
-    .content-grid-dashboard {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Ma'lumotlar konteyneri */
-.info-details-container {
+/* =========================================
+   MA'LUMOTLAR QATORI (Nuqtali ko'rinish)
+========================================= */
+.info-details-container, .instructor-details {
     padding: 10px 0;
     margin-bottom: 15px;
 }
 
-/* Har bir qator strukturasi */
-.info-row {
+.info-row, .detail-row {
     display: flex;
-    align-items: flex-end; /* Nuqtalar matn bilan pastki chiziqda tekislanadi */
+    align-items: flex-end;
     margin-bottom: 12px;
     font-size: 14px;
+    color: var(--text-main, #1e293b);
 }
 
-/* Chap tomondagi sarlavha (🆔 ID, 🏢 Nomi...) */
 .info-label {
     color: var(--text-muted, #94a3b8);
     white-space: nowrap;
     font-weight: 500;
 }
 
-/* O'rtadagi nuqtali chiziq */
-.info-dots {
+.info-dots, .dots {
     flex-grow: 1;
-    border-bottom: 2px dotted rgba(203, 213, 225, 0.3); /* Nuqtalar rangi */
-    margin: 0 8px 4px 8px; /* Matndan biroz masofa */
+    border-bottom: 2px dotted rgba(203, 213, 225, 0.5);
+    margin: 0 8px 4px 8px;
 }
 
-/* O'ng tomondagi qiymat */
-.info-value {
-    color: var(--text-main, #ffffff);
+.info-value, .val {
+    color: var(--primary-color, #4f46e5);
     font-weight: 700;
     white-space: nowrap;
 }
 
-/* Zamonaviy "Yopish" tugmasi */
-.btn-modern-action {
+[data-theme="dark"] .detail-row { color: #f1f5f9; }
+[data-theme="dark"] .info-dots, [data-theme="dark"] .dots { border-bottom-color: rgba(255, 255, 255, 0.1); }
+[data-theme="dark"] .val, [data-theme="dark"] .info-value { color: #818cf8; }
+
+/* =========================================
+   ASOSIY MODALLAR (O'chirish, Ko'rish, Alert)
+========================================= */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 14px;
-    background: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
 }
 
-.btn-modern-action:hover {
-    background: #4338ca;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+.modal-content {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    border-top: 6px solid var(--primary-color);
 }
 
-/* Dark mode-da nuqtalar ko'rinishi */
-[data-theme="dark"] .info-dots {
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Jadval qatori ustiga kelganda effekt */
-tbody tr {
-    transition: background-color 0.2s ease; /* Faqat rang o'zgarishi mayin bo'lsin */
-    position: relative;
-}
-
-/* Light Mode uchun hover */
-tbody tr:hover {
-    background-color: var(--hover-bg, #f1f5f9); /* Rang biroz to'qroq qilindi */
-    cursor: pointer;
-}
-
-/* Dark Mode uchun hover (Seziladigan darajada to'g'rilandi) */
-[data-theme="dark"] tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.08) !important; /* Shaffoflik oshirildi */
-    box-shadow: inset 4px 0 0 0 var(--primary-color); /* Chap tomondan chiziqcha effekti (ixtiyoriy) */
-}
-
-/* Agar hover vaqtida matn rangi ham o'zgarishi kerak bo'lsa */
-[data-theme="dark"] tbody tr:hover td {
-    color: #ffffff; /* Matnni yorqinroq qiladi */
-}
-
-.info-card h3, .list-card h3 {
-    margin-bottom: 25px;
-    font-size: 1.1rem;
-    color: var(--primary-color, #4f46e5);
-    border-left: 4px solid var(--primary-color);
-    padding-left: 15px;
-}
-
-/* Modal tugmalari uchun konteyner */
 .modal-actions {
     display: flex;
     gap: 12px;
@@ -247,15 +210,14 @@ tbody tr:hover {
     justify-content: center;
 }
 
-/* Barcha modal tugmalari uchun umumiy zamonaviy uslub */
 .modal-btn {
     padding: 12px 24px;
-    border-radius: 12px; /* Burchaklarni yumshatish */
+    border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: none; /* Standart ramkani yo'qotish */
+    border: none;
     outline: none;
     display: inline-flex;
     align-items: center;
@@ -263,103 +225,170 @@ tbody tr:hover {
     min-width: 120px;
 }
 
-/* "Ha, o'chirilsin" - Qizil tugma */
-.btn-danger {
-    background-color: #ef4444;
-    color: white;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-}
+.btn-danger { background-color: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+.btn-danger:hover { background-color: #dc2626; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3); }
 
-.btn-danger:hover {
-    background-color: #dc2626;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3);
-}
+.btn-success { background-color: #10b981; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+.btn-success:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); }
 
-/* "Yo'q, qolsin" yoki "Yopish" - Yashil yoki neytral tugma */
-.btn-success {
-    background-color: #10b981;
-    color: white;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.btn-success:hover {
-    background-color: #059669;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
-}
-
-/* "Yopish" (viewModal uchun) */
 .btn-secondary {
     background-color: var(--primary-color, #6366f1);
     color: white;
-    width: 100%; /* Ma'lumot ko'rishda tugma to'liq eni bo'yicha */
+    width: 100%;
     margin-top: 20px;
 }
 
-/* Ma'lumotlar ro'yxati */
-.instructor-details {
-    padding: 10px 0;
-    margin-bottom: 20px;
+/* Alert modali uchun qo'shimchalar */
+#alertContent { border-top: 6px solid #f59e0b; }
+.alert-success-border { border-top-color: #10b981 !important; }
+.alert-error-border { border-top-color: #ef4444 !important; }
+.alert-warning-border { border-top-color: #f59e0b !important; }
+#alertModal[style*="display: flex"] .modal-content {
+    transform: scale(1);
+    opacity: 1;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
 }
 
-.detail-row {
-    display: flex;
-    align-items: flex-end; /* Nuqtalar matn bilan bir qatorda bo'lishi uchun */
-    margin-bottom: 12px;
-    font-size: 14px;
-    color: var(--text-main, #1e293b);
-}
-
-/* O'ng va chapni ajratib turuvchi nuqtalar */
-.dots {
-    flex: 1;
-    border-bottom: 2px dotted #cbd5e1; /* Nuqtali chiziq */
-    margin: 0 10px 4px 10px;
-}
-
-.val {
-    font-weight: 700;
-    color: var(--primary-color, #4f46e5);
-}
-
-/* Modal ichidagi "Yopish" va boshqa tugmalar */
-.modal-btn {
-    border: none !important;
-    outline: none !important;
-    cursor: pointer;
-    font-weight: 700;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* "Yopish" tugmasini to'liq kenglikda va chiroyli qilish */
-.btn-primary-full {
+/* =========================================
+   HISOBOT MODALI (Boshqalardan alohida)
+========================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 14px;
-    background: #4f46e5;
-    color: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-.btn-primary-full:hover {
-    background: #4338ca;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+/* NOMINI O'ZGARTIRDIM: Boshqa modallarga xalaqit bermasligi uchun */
+.report-modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 350px;
+    text-align: left;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-.btn-danger-modern { background: #ef4444; color: white; padding: 10px 20px; border-radius: 10px; flex: 1; }
-.btn-success-modern { background: #10b981; color: white; padding: 10px 20px; border-radius: 10px; flex: 1; }
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.report-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
 
-/* Dark mode uchun nuqtalar rangini moslashtirish */
-[data-theme="dark"] .detail-row { color: #f1f5f9; }
-[data-theme="dark"] .dots { border-bottom-color: rgba(255, 255, 255, 0.1); }
-[data-theme="dark"] .val { color: #818cf8; }
+.form-group {
+    margin-bottom: 15px;
+}
 
-/* Modallar dizayni */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; }
-.modal-content { background: var(--card-bg); padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; text-align: center; border-top: 6px solid var(--primary-color); }
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* NOMINI O'ZGARTIRDIM */
+.report-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-cancel {
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+.btn-cancel:hover { background: #cbd5e1; }
+
+.btn-save {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+.btn-save:hover { background: #0056b3; }
+
+/* =========================================
+   RESPONSIVE & PRINT STILLARI
+========================================= */
+@media (max-width: 1100px) {
+    .content-grid-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* PRINT (Chop etish) STILLARI */
+@media print {
+    body * { visibility: hidden; }
+
+    /* Faqat print qismini ko'rsatish va matnlarni majburiy QORA qilish */
+    #printArea, #printArea * {
+        visibility: visible;
+        color: #000000 !important;
+    }
+
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-sizing: border-box; /* Muhim: kenglikni to'g'ri hisoblash uchun */
+        padding: 0 8mm; /* Ikki yondan 1 sm dan xavfsiz hoshiya tashlaymiz */
+    }
+
+    /* A4 format */
+    @page {
+        size: A4;
+        margin: 8mm;
+    }
+
+    .report-header { text-align: center; margin-bottom: 20px; font-family: 'Times New Roman', serif; }
+    .report-title { font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+    .report-info { text-align: left; margin-bottom: 20px; font-size: 16px; font-family: 'Times New Roman', serif; line-height: 1.5; }
+    .report-info-divider { border-bottom: 1px dashed #000; margin: 15px 0; }
+
+    .report-table {
+        width: 100%;
+        max-width: 100%; /* Jadval chegaradan chiqib ketmasligi uchun */
+        border-collapse: collapse;
+        font-family: 'Times New Roman', serif;
+        font-size: 13px; /* Shriftni biroz kichraytirdim, 8 ta ustun yaxshi sig'ishi uchun */
+    }
+    .report-table th, .report-table td {
+        border: 1px solid #000;
+        padding: 6px; /* Kataklar ichidagi bo'shliqni ham sal qisqartirdik */
+        text-align: center;
+        word-wrap: break-word;
+    }
+
+    .report-table th {
+        font-weight: bold;
+        background-color: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

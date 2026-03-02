@@ -44,6 +44,7 @@ async function fetchCenters() {
             <td><b>${item.name}</b></td>
             <td><span class="badge">${item.collaboration_type}</span></td>
             <td>${item.students_count} ta</td>
+            <td><span class="action-icon view-icon" title="Hisobot" onclick="openReportModal(${item.id}, '${item.name}')">🧮</span></td>
             <td class="action-icons">
                 <span class="action-icon view-icon" title="Ko'rish" onclick="viewCenter(${item.id})">👁️</span>
                 <span class="action-icon edit-icon" title="Tahrirlash" id="edit-btn-${item.id}">✏️</span>
@@ -244,3 +245,155 @@ window.onclick = function(event) {
     });
 };
 
+let currentReportCenterId = null;
+let currentReportCenterName = null;
+
+// Modalni ochish
+window.openReportModal = function(centerId, centerName) {
+    currentReportCenterId = centerId;
+    currentReportCenterName = centerName;
+    document.getElementById('reportModal').style.display = 'flex';
+};
+
+// Modalni yopish
+window.closeReportModal = function() {
+    document.getElementById('reportModal').style.display = 'none';
+};
+
+// Hisobotni shakllantirish
+window.generateReport = async function() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) {
+        alert("Iltimos, boshlanish va tugash sanalarini belgilang!");
+        return;
+    }
+
+    try {
+        // Supabase-dan ma'lumotlarni join orqali olish (tickets va instructors)
+        // Eslatma: 'instructors' foreign key munosabati to'g'ri sozlangan bo'lishi shart
+        const { data: tickets, error } = await _supabase
+            .from('tickets')
+            .select(`
+                full_name,
+                group,
+                created_at,
+                minute,
+                payment_amount,
+                instructors (
+                    full_name,
+                    car_number
+                )
+            `)
+            .eq('center_name', currentReportCenterId) // Center id 'center_name' ustunida saqlangan deb hisoblaymiz
+            .gte('created_at', `${startDate} 00:00:00`)
+            .lte('created_at', `${endDate} 23:59:59`)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        buildAndPrintReport(tickets, startDate, endDate);
+        closeReportModal();
+
+    } catch (err) {
+        console.error("Hisobot ma'lumotlarini yuklashda xatolik:", err.message);
+        alert("Xatolik yuz berdi. Konsolni tekshiring.");
+    }
+};
+
+// HTML jadvalni tuzish va Chop etish (Print) funksiyasi
+function buildAndPrintReport(tickets, startDate, endDate) {
+    // Jami hisob-kitoblar
+    const totalCount = tickets.length;
+    const totalSum = tickets.reduce((sum, t) => sum + (Number(t.payment_amount) || 0), 0);
+
+    // Sana formati hisobot boshi uchun
+    const printDate = new Date().toLocaleString('uz-UZ', {
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: true
+    });
+
+    // Davrni chiroyli ko'rsatish
+    let periodText = startDate === endDate ? `${startDate} (1 kunlik hisobot)` : `${startDate} dan ${endDate} gacha`;
+
+    // Jadval satrlarini yig'ish
+    let rowsHtml = '';
+    tickets.forEach((t, index) => {
+        const ticketDate = new Date(t.created_at).toLocaleDateString('uz-UZ');
+        const instructorName = t.instructors ? t.instructors.full_name : '—';
+        const carNumber = t.instructors ? t.instructors.car_number : '—';
+        const formattedSum = (Number(t.payment_amount) || 0).toLocaleString('uz-UZ') + " so'm";
+        const groupNum = t.group ? t.group : '0';
+
+        rowsHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td style="text-align: left;">${t.full_name || '—'}</td>
+                <td>${groupNum}</td>
+                <td>${ticketDate}</td>
+                <td>${t.minute || '0'}</td>
+                <td style="text-align: left;">${instructorName}</td>
+                <td>${formattedSum}</td>
+                <td>${carNumber}</td>
+            </tr>
+        `;
+    });
+
+    // Vaqtinchalik Print divni yaratish (agar yo'q bo'lsa)
+    let printContainer = document.getElementById('printArea');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'printArea';
+        document.body.appendChild(printContainer);
+    }
+
+    // A4 Formatidagi Hisobot shabloni
+    printContainer.innerHTML = `
+        <div style="font-size: 10px; margin-bottom: 20px;">
+            <span>${new Date().toLocaleDateString('uz-UZ')}</span>
+            <span style="float: right;">Professional Hisobot</span>
+        </div>
+        <div class="report-header">
+            <div class="report-title">CHEK HISOBOTI</div>
+            <p>Davr: <b>${periodText}</b></p>
+        </div>
+        
+        <div class="report-info">
+            <div>Jami cheklar soni: <b>${totalCount} ta</b></div>
+            <div>Umumiy tushum: <b>${totalSum.toLocaleString('uz-UZ')} so'm</b></div>
+            <div>Sana: <b>${printDate}</b></div>
+            <div class="report-info-divider"></div>
+            <div>O'quv markazi: <b>${currentReportCenterName}</b></div>
+            <div style="font-size: 14px; margin-top: 5px; font-weight: normal;">
+                Markaz bo'yicha: ${totalCount} ta chek, ${totalSum.toLocaleString('uz-UZ')} so'm
+            </div>
+        </div>
+
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">№</th>
+                    <th style="width: 20%;">Mijoz F.I.Sh</th>
+                    <th style="width: 8%;">Guruh</th>
+                    <th style="width: 10%;">Sana</th>
+                    <th style="width: 8%;">Min.</th>
+                    <th style="width: 17%;">Instruktor</th>
+                    <th style="width: 17%;">Summa</th>
+                    <th style="width: 15%;">Moshina</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml.length > 0 ? rowsHtml : '<tr><td colspan="8">Ushbu oraliqda ma\'lumot topilmadi</td></tr>'}
+            </tbody>
+        </table>
+    `;
+
+    // Brauzerning Print oynasini chaqirish
+    window.print();
+
+    // Printdan keyin tozalab tashlash (ekranda joy egallamasligi uchun)
+    setTimeout(() => {
+        printContainer.innerHTML = '';
+    }, 1000);
+}
