@@ -20,27 +20,112 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTickets();
 });
 
-// 1. Supabase'dan o'quv markazlarini yuklab select'ga qo'yish
+// 1. Bazadan kelgan barcha markazlar ma'lumotini saqlash uchun o'zgaruvchi
+let centersData = [];
+
+// HTML elementlarni tanlab olamiz
+const categorySelect = document.getElementById('categorySelect');
+const paymentAmount = document.getElementById('paymentAmount');
+const hourSelect = document.getElementById('hourSelect');
+const paymentType = document.getElementById('paymentType'); // Yangi qo'shilgan maydon
+
+// 2. Supabase'dan o'quv markazlarini va ularning narxlarini yuklab olish
 async function fetchCenters() {
     const { data, error } = await _supabase
         .from('centers')
-        .select('id, name'); // Faqat nomini emas, ID-sini ham olamiz
+        .select('id, name, collaboration_type, a_category, b_category, c_category, bc_category, cd_category');
 
     if (error) {
         console.error("Markazlarni yuklashda xatolik:", error);
         return;
     }
 
+    centersData = data; // Ma'lumotlarni global o'zgaruvchiga saqlaymiz
+
     if (centerSelect) {
         centerSelect.innerHTML = '<option value="">Tanlang...</option>';
         data.forEach(center => {
             const option = document.createElement('option');
-            option.value = center.id; // VALUE qismiga ID-ni beramiz
-            option.textContent = center.name; // FOYDALANUVCHI-ga nomini ko'rsatamiz
+            option.value = center.id;
+            option.textContent = center.name;
             centerSelect.appendChild(option);
         });
     }
 }
+
+// 3. Markaz va toifa tanlanganda maydonlarni avtomatik to'ldirish
+function updateFormFields() {
+    const selectedCenterId = centerSelect.value;
+    const selectedCategory = categorySelect.value;
+
+    if (!selectedCenterId) {
+        // Agar markaz tanlanmagan bo'lsa, maydonlarni asl holiga (qulfdan chiqarib) qaytaramiz
+        paymentAmount.value = '';
+        paymentAmount.readOnly = false;
+        hourSelect.disabled = false;
+        paymentType.disabled = false;
+        return;
+    }
+
+    // Tanlangan markazni massivdan topamiz
+    const center = centersData.find(c => c.id == selectedCenterId);
+
+    if (center && center.collaboration_type === 'Filial') {
+        // Toifaga qarab narxni belgilash
+        let price = '';
+        switch(selectedCategory) {
+            case 'A toifa': price = center.a_category; break;
+            case 'B toifa': price = center.b_category; break;
+            case 'C toifa': price = center.c_category; break;
+            case 'BC toifa': price = center.bc_category; break;
+            case 'CD toifa': price = center.cd_category; break;
+        }
+
+        // 1. To'lov miqdorini yozib, qulflaymiz (input bo'lgani uchun readOnly)
+        paymentAmount.value = price || 0;
+        paymentAmount.readOnly = true;
+
+        // 2. Soatni 60 daqiqaga o'zgartirib, qulflaymiz (select bo'lgani uchun disabled)
+        hourSelect.value = "60";
+        hourSelect.disabled = true;
+
+        // 3. To'lov turini "Pul o'tkazish" qilib, qulflaymiz
+        paymentType.value = "Pul o'tkazish";
+        paymentType.disabled = true;
+
+    } else {
+        // Agar Filial bo'lmasa, ma'lumotlarni qo'lda kiritishga ruxsat beramiz
+        paymentAmount.value = '';
+        paymentAmount.readOnly = false;
+        hourSelect.disabled = false;
+        paymentType.disabled = false;
+    }
+}
+
+// 4. Hodisalarni (Event Listeners) ulash
+centerSelect.addEventListener('change', updateFormFields);
+categorySelect.addEventListener('change', updateFormFields);
+
+// 5. Formani yuborish (Submit) qismi
+receiptForm.addEventListener('submit', (e) => {
+    // FORM YUBORILAYOTGANDA DIQQAT QILING:
+    // Disabled (qulflangan) <select> maydonlari formata ichida ketmay qoladi.
+    // Ularning qiymati bazaga yetib borishi uchun submit paytida vaqtincha qulfdan chiqaramiz.
+
+    if (hourSelect.disabled) {
+        hourSelect.disabled = false;
+    }
+
+    if (paymentType.disabled) {
+        paymentType.disabled = false;
+    }
+
+    // Bu yerdan keyin Supabase'ga ma'lumotlarni yozish kodi (insert) davom etadi...
+    // e.preventDefault(); qilib, JS orqali fetch yoki supabase.insert() ishlatsangiz bo'ladi.
+});
+
+// Dastur ishga tushganda markazlarni yuklash funksiyasini chaqirish
+// fetchCenters();
 
 // 2. Barcha cheklarni (tickets) jadvalga yuklash
 async function fetchTickets() {
@@ -131,33 +216,59 @@ receiptForm.addEventListener('submit', async (e) => {
 });
 
 // 4. Chekni chop etish mantiqi (Hidden Print Section orqali)
+// 4. Chekni chop etish mantiqi
 function printReceiptLogic(ticket) {
-    // HTML'dagi print-area elementlarini to'ldirish
+    // 1. Markaz ma'lumotlarini global centersData massividan qidirib topamiz.
+    // Formada 'center_name' maydoniga center.id saqlanganligi sababli ID bo'yicha qidiramiz.
+    const centerInfo = centersData.find(c => c.id == ticket.center_name);
+
+    // 2. HTML elementlarni to'ldirish
     document.getElementById('p-id').textContent = ticket.id;
     document.getElementById('p-name').textContent = ticket.full_name;
-    document.getElementById('p-center').textContent = ticket.center_name;
+
+    // Agar markaz obyekti topilsa, uning haqiqiy nomini chiqaramiz, aks holda bazadagi qiymatni
+    document.getElementById('p-center').textContent = centerInfo ? centerInfo.name : ticket.center_name;
+
     document.getElementById('p-category').textContent = ticket.direction_category;
     document.getElementById('p-minutes').textContent = ticket.minute;
-    document.getElementById('p-amount').textContent = Number(ticket.payment_amount).toLocaleString();
+
+    // 3. To'lov miqdori va Strikethrough (ustidan chizish) mantiqi
+    const amountElement = document.getElementById('p-amount');
+    amountElement.textContent = Number(ticket.payment_amount).toLocaleString();
+
+    // Markaz mavjudligini va uning turi 'Filial' ekanligini tekshiramiz
+    if (centerInfo && centerInfo.collaboration_type === 'Filial') {
+        amountElement.style.textDecoration = 'line-through';
+        amountElement.style.fontWeight = 'bold'; // Vizual ravishda yaqqolroq ko'rinishi uchun
+    } else {
+        amountElement.style.textDecoration = 'none';
+        amountElement.style.fontWeight = 'normal';
+    }
+
+    // 4. Boshqa ma'lumotlar
     document.getElementById('p-type').textContent = ticket.payment_type;
-    document.getElementById('p-date').textContent = new Date(ticket.created_at).toLocaleString('uz-UZ');
+    document.getElementById('p-date').textContent = new Date(ticket.created_at).toLocaleString('uz-UZ', {hour12: false});
 
-    // QR Kodni tozalash va yangidan yaratish (faqat ID bilan)
+    // 5. QR Kodni yangilash
     const qrContainer = document.getElementById('qrcodeContainer');
-    qrContainer.innerHTML = '';
-    new QRCode(qrContainer, {
-        text: ticket.id.toString(),
-        width: 128,
-        height: 128,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-    });
+    qrContainer.innerHTML = ''; // Oldingi QR kodni tozalash
 
-    // Chop etish oynasini ochish (brauzer media-print orqali chekni ko'rsatadi)
+    if (typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, {
+            text: ticket.id.toString(),
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    }
+
+    // 6. Chop etish oynasini ochish
+    // QR kod rasm sifatida generatsiya bo'lishi uchun ozgina kutish beramiz
     setTimeout(() => {
         window.print();
-    }, 500);
+    }, 600);
 }
 
 // 5. Yangi funksiya: Jadvaldan turib chekni qayta chop etish
