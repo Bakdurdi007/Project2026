@@ -123,15 +123,18 @@ async function startAction(instructorId) {
 
         if (error) throw error;
 
-        // 2. Instructors jadvalidagi statusni false ga o'zgartirish
-        const { error: statusError } = await _supabase
+        // 2. Instructors jadvalidagi statusni false ga o'zgartirish va ma'lumotlarni qaytarish
+        // Chek uchun full_name va car_number kerak bo'ladi
+        const { data: instructorData, error: statusError } = await _supabase
             .from('instructors')
             .update({ status: false })
-            .eq('id', instructorId);
+            .eq('id', instructorId)
+            .select('full_name, car_number')
+            .single();
 
         if (statusError) throw statusError;
 
-        // UI ni yangilash
+        // 3. UI ni yangilash
         document.getElementById(`start-${instructorId}`).textContent = formatTime(startTimeStr);
         document.getElementById(`stop-${instructorId}`).textContent = "--:--";
         document.getElementById(`est-${instructorId}`).textContent = "--:--";
@@ -141,11 +144,103 @@ async function startAction(instructorId) {
         btn.disabled = false;
         btn.onclick = () => stopAction(instructorId, data.id, startTimeStr);
 
+        // 4. Chekni chop etish funksiyasini chaqirish
+        printReceipt({
+            id: data.id,
+            startTime: startTimeStr,
+            fullName: instructorData.full_name,
+            carNumber: instructorData.car_number
+        });
+
     } catch (err) {
         console.error("Boshlashda xato:", err);
         btn.disabled = false;
         btn.textContent = "Boshlash";
     }
+}
+
+// Chek chiqarish funksiyasi
+function printReceipt(receiptData) {
+    // Vaqtni chiroyli formatlash (ixtiyoriy, mahalliy vaqtga moslab)
+    const formattedTime = new Date(receiptData.startTime).toLocaleString('uz-UZ', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    // Yangi yashirin oyna ochish
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+
+    // Chek dizayni (HTML va CSS)
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Chek</title>
+            <style>
+                /* Printer o'lchamlarini berish: 80mm kenglik, balandligi avtomat */
+                @page { 
+                    margin: 0; 
+                    size: 80mm auto; 
+                }
+                body {
+                    font-family: 'Courier New', Courier, monospace; /* Cheklar uchun mos shrift */
+                    width: 80mm;
+                    margin: 0;
+                    padding: 5mm; /* Yonlardan ozgina joy */
+                    padding-bottom: 7mm; /* TUGAGAN JOYDAN 7MM BO'SH JOY TASHASH */
+                    box-sizing: border-box;
+                    font-size: 14px;
+                    color: #000;
+                }
+                .center { text-align: center; }
+                .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+                .row { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    margin: 4px 0; 
+                    word-break: break-word;
+                }
+                .label { font-weight: bold; margin-right: 5px; }
+                .value { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <h3 class="center">BOSHLASH CHEKI</h3>
+            <div class="line"></div>
+            
+            <div class="row">
+                <span class="label">ID:</span> 
+                <span class="value">${receiptData.id}</span>
+            </div>
+            <div class="row">
+                <span class="label">Boshlash vaqti:</span> 
+                <span class="value">${formattedTime}</span>
+            </div>
+            <div class="row">
+                <span class="label">Instructor ismi:</span> 
+                <span class="value">${receiptData.fullName}</span>
+            </div>
+            <div class="row">
+                <span class="label">Mashina raqami:</span> 
+                <span class="value">${receiptData.carNumber}</span>
+            </div>
+            
+            <div class="line"></div>
+            <div class="center" style="font-size: 12px; margin-top: 10px;">Oq yo'l!</div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Dizayn yuklanishi uchun ozgina kutib, keyin chop etish buyrug'ini berish
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }, 250);
 }
 
 // 3. TO'XTATISH tugmasi
@@ -173,34 +268,202 @@ async function stopAction(instructorId, partnerRecordId, startTimeStr) {
 
         if (error) throw error;
 
-        // 2. Instructors jadvalidagi statusni true ga o'zgartirish
-        const { error: statusError } = await _supabase
+        // 2. Instructors jadvalidagi statusni true ga o'zgartirish va ma'lumotlarni olish
+        const { data: instructorData, error: statusError } = await _supabase
             .from('instructors')
             .update({ status: true })
-            .eq('id', instructorId);
+            .eq('id', instructorId)
+            .select('full_name, car_number')
+            .single();
 
         if (statusError) throw statusError;
 
-        // UI yangilash
-        document.getElementById(`stop-${instructorId}`).textContent = formatTime(stopTimeStr);
-        document.getElementById(`est-${instructorId}`).textContent = `${estimatedMinutes} min`;
-
-        // Jami vaqtni yangilash (Eski qiymatga yangisini qo'shamiz)
-        const totalCell = document.getElementById(`total-${instructorId}`);
-        const oldTotal = parseFloat(totalCell.textContent) || 0;
-        totalCell.textContent = `${oldTotal + estimatedMinutes} min`;
-
-        // Tugmani qaytarish
-        btn.textContent = "Boshlash";
-        btn.className = "btn-start";
-        btn.disabled = false;
-        btn.onclick = () => startAction(instructorId);
+        // 3. Hisoblash uchun Modal oynani chaqirish
+        showCalculationModal({
+            instructorId,
+            partnerRecordId,
+            startTimeStr,
+            stopTimeStr,
+            estimatedMinutes,
+            instructorData,
+            btn
+        });
 
     } catch (err) {
         console.error("To'xtatishda xato:", err);
         btn.disabled = false;
         btn.textContent = "To'xtatish";
     }
+}
+
+// Modal oyna yaratish va hisoblash funksiyasi
+function showCalculationModal(data) {
+    // Orqa fonni (qoraytirilgan oyna) yaratish
+    const overlay = document.createElement('div');
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999;";
+
+    // Asosiy oq oyna
+    const modal = document.createElement('div');
+    modal.style.cssText = "background: white; padding: 25px; border-radius: 10px; width: 320px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif;";
+
+    modal.innerHTML = `
+        <h3 style="margin-top: 0; color: #333;">To'lovni hisoblash</h3>
+        <p style="font-size: 14px; color: #555; margin-bottom: 10px;">Instruktorning 1 soatlik to'lovi (so'm):</p>
+        <input type="number" id="hourlyRateInput" style="width: 100%; padding: 10px; margin-bottom: 20px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" placeholder="Masalan: 50000">
+        <button id="calcBtn" style="padding: 12px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold;">Hisoblash va Chek chiqarish</button>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // "Hisoblash" tugmasi hodisasi
+    document.getElementById('calcBtn').onclick = () => {
+        const rateInput = document.getElementById('hourlyRateInput').value;
+        const hourlyRate = parseFloat(rateInput);
+
+        if (!hourlyRate || hourlyRate <= 0) {
+            alert("Iltimos, to'g'ri qiymat kiriting!");
+            return;
+        }
+
+        // 1. Summani hisoblash: (Daqiqa / 60) * Soatlik_stavka
+        // Yaxlitlash uchun Math.round dan foydalanamiz
+        const summa = Math.round((data.estimatedMinutes / 60) * hourlyRate);
+
+        // 2. Chek chop etish funksiyasini chaqirish
+        printStopReceipt({
+            id: data.partnerRecordId,
+            startTime: data.startTimeStr,
+            stopTime: data.stopTimeStr,
+            fullName: data.instructorData.full_name,
+            carNumber: data.instructorData.car_number,
+            estimatedMinutes: data.estimatedMinutes,
+            summa: summa
+        });
+
+        // 3. UI ni (jadvallardagi yozuvlarni) yangilash
+        document.getElementById(`stop-${data.instructorId}`).textContent = formatTime(data.stopTimeStr);
+        document.getElementById(`est-${data.instructorId}`).textContent = `${data.estimatedMinutes} min`;
+
+        const totalCell = document.getElementById(`total-${data.instructorId}`);
+        const oldTotal = parseFloat(totalCell.textContent) || 0;
+        totalCell.textContent = `${oldTotal + data.estimatedMinutes} min`;
+
+        // 4. Tugmani dastlabki (Boshlash) holatiga qaytarish
+        data.btn.textContent = "Boshlash";
+        data.btn.className = "btn-start";
+        data.btn.disabled = false;
+        data.btn.onclick = () => startAction(data.instructorId);
+
+        // 5. Modal oynani yopish (o'chirish)
+        document.body.removeChild(overlay);
+    };
+}
+
+// Tugatish chekini chiqarish funksiyasi
+function printStopReceipt(receiptData) {
+    // Vaqtlarni o'qishli formatga o'tkazish yordamchi funksiyasi
+    const formatDateTime = (isoString) => {
+        return new Date(isoString).toLocaleString('uz-UZ', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    };
+
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Tugatish Cheki</title>
+            <style>
+                @page { 
+                    margin: 0; 
+                    size: 80mm auto; 
+                }
+                body {
+                    font-family: 'Courier New', Courier, monospace;
+                    width: 80mm;
+                    margin: 0;
+                    padding: 5mm;
+                    padding-bottom: 7mm; /* TUGAGAN JOYDAN 7MM BO'SH JOY */
+                    box-sizing: border-box;
+                    font-size: 14px;
+                    color: #000;
+                }
+                .center { text-align: center; }
+                .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+                .row { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    margin: 4px 0; 
+                    word-break: break-word;
+                }
+                .label { font-weight: normal; margin-right: 5px; }
+                .value { text-align: right; font-weight: bold; }
+                /* Summa uchun maxsus qora va yirik shrift */
+                .summa-row { 
+                    font-size: 18px; 
+                    font-weight: 900; 
+                    margin-top: 10px;
+                }
+                .summa-row .label { font-weight: 900; }
+            </style>
+        </head>
+        <body>
+            <h3 class="center">TUGATISH CHEKI</h3>
+            <div class="line"></div>
+            
+            <div class="row">
+                <span class="label">ID:</span> 
+                <span class="value">${receiptData.id}</span>
+            </div>
+            <div class="row">
+                <span class="label">Boshlash:</span> 
+                <span class="value">${formatDateTime(receiptData.startTime)}</span>
+            </div>
+            <div class="row">
+                <span class="label">Tugash:</span> 
+                <span class="value">${formatDateTime(receiptData.stopTime)}</span>
+            </div>
+            <div class="row">
+                <span class="label">Instructor:</span> 
+                <span class="value">${receiptData.fullName}</span>
+            </div>
+            <div class="row">
+                <span class="label">Mashina:</span> 
+                <span class="value">${receiptData.carNumber}</span>
+            </div>
+            <div class="row">
+                <span class="label">Umumiy vaqt:</span> 
+                <span class="value">${receiptData.estimatedMinutes} daqiqa</span>
+            </div>
+            
+            <div class="line"></div>
+            
+            <div class="row summa-row">
+                <span class="label">SUMMA:</span> 
+                <span class="value">${receiptData.summa.toLocaleString('uz-UZ')} so'm</span>
+            </div>
+            
+            <div class="line"></div>
+            <div class="center" style="font-size: 12px; margin-top: 10px;">
+                Xizmatimizdan foydalanganingiz uchun rahmat!
+            </div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }, 250);
 }
 
 // QIDIRUV FUNKSIYASI VA EVENT LISTENERS (YANGI QO'SHILGAN QISM)
