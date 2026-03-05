@@ -42,54 +42,13 @@
             <p id="count-instructors">0</p>
         </div>
         <div class="stat-card">
-            <h3>Bugungi cheklar</h3>
+            <h3>Bugungi cheklar soni</h3>
             <p id="count-checks">0</p>
         </div>
         <div class="stat-card">
-            <h3>Bugungi cheklar</h3>
+            <h3>Bugungi cheklar summasi</h3>
             <p id="count-money">0</p>
         </div>
-    </section>
-
-    <section class="stats-grid">
-        <div class="stat-card">
-            <h3>Filial Instruktorlar hisoboti</h3>
-            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
-                <div style="width: 67%;">
-                    <select id="report-period-instructor" style="width: 100%; padding: 10px; border-radius: 5px;">
-                        <option value="1day">1 kunlik hisobot</option>
-                        <option value="1week">1 haftalik hisobot</option>
-                        <option value="1month">1 oylik hisobot</option>
-                        <option value="1year">1 yillik hisobot</option>
-                    </select>
-                </div>
-                <div style="width: 30%;">
-                    <button onclick="generateReport()" style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
-                        Hisobotni chiqarish
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <h3>Chek hisoboti</h3>
-            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
-                <div style="width: 67%;">
-                    <select id="report-period" style="width: 100%; padding: 10px; border-radius: 5px;">
-                        <option value="1day">1 kunlik hisobot</option>
-                        <option value="1week">1 haftalik hisobot</option>
-                        <option value="1month">1 oylik hisobot</option>
-                        <option value="1year">1 yillik hisobot</option>
-                    </select>
-                </div>
-                <div style="width: 30%;">
-                    <button onclick="generateProfessionalReport()" style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
-                        Hisobotni chiqarish
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div id="report-print-section" style="display: none;"></div>
     </section>
 
     <section class="stats-grid">
@@ -108,6 +67,74 @@
             <p id="count-transfer">0</p>
             <p id="summa-transfer">0</p>
         </div>
+        <div class="stat-card">
+            <h3>HAMKOR INSTRUKTORLAR</h3>
+            <p id="payment-type">0</p>
+            <p id="payment-summa">0</p>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <h3>Filial Instruktorlar hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
+                <div style="width: 67%;">
+                    <select id="report-period-instructor" style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <option value="1day">1 kunlik hisobot</option>
+                        <option value="1week">1 haftalik hisobot</option>
+                        <option value="1month">1 oylik hisobot</option>
+                        <option value="1year">1 yillik hisobot</option>
+                    </select>
+                </div>
+                <div style="width: 30%;">
+                    <button onclick="generateReport()"
+                            style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
+                        Hisoboti
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Chek hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
+                <div style="width: 67%;">
+                    <select id="report-period" style="width: 100%; padding: 10px; border-radius: 5px;">
+                        <option value="1day">1 kunlik hisobot</option>
+                        <option value="1week">1 haftalik hisobot</option>
+                        <option value="1month">1 oylik hisobot</option>
+                        <option value="1year">1 yillik hisobot</option>
+                    </select>
+                </div>
+                <div style="width: 30%;">
+                    <button onclick="generateProfessionalReport()"
+                            style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
+                        Hisoboti
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Homiy Instruktorlar hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
+                <div style="width: 67%;">
+                    <select id="reportPeriod" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                        <option value="1day">1 kunlik hisobot</option>
+                        <option value="1week">1 haftalik hisobot</option>
+                        <option value="1month">1 oylik hisobot</option>
+                        <option value="1year">1 yillik hisobot</option>
+                    </select>
+                </div>
+                <div style="width: 30%;">
+                    <button onclick="generatePartnerReport()" style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px; font-weight: bold;">
+                        Hisobotni
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="report-print-section" style="display: none;"></div>
     </section>
 
     <section class="admin-report-container">

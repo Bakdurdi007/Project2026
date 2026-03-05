@@ -297,40 +297,94 @@ async function stopAction(instructorId, partnerRecordId, startTimeStr) {
 }
 
 // Modal oyna yaratish va hisoblash funksiyasi
+// Diqqat: Supabase ulanishini kodingizning boshida e'lon qilgan bo'lishingiz kerak.
+// Agar ulanmagan bo'lsangiz, quyidagi 3 qatorni o'zingizning ma'lumotlaringiz bilan to'ldirib qo'shing:
+// const supabaseUrl = 'https://XXXXX.supabase.co';
+// const supabaseKey = 'SIZNING_SUPABASE_ANON_KEY';
+// const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 function showCalculationModal(data) {
-    // Orqa fonni (qoraytirilgan oyna) yaratish
+    // Orqa fonni yaratish
     const overlay = document.createElement('div');
     overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999;";
 
-    // Asosiy oq oyna
+    // Asosiy oyna
     const modal = document.createElement('div');
-    modal.style.cssText = "background: white; padding: 25px; border-radius: 10px; width: 320px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif;";
+    modal.style.cssText = "background: white; padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;";
 
     modal.innerHTML = `
-        <h3 style="margin-top: 0; color: #333;">To'lovni hisoblash</h3>
-        <p style="font-size: 14px; color: #555; margin-bottom: 10px;">Instruktorning 1 soatlik to'lovi (so'm):</p>
-        <input type="number" id="hourlyRateInput" style="width: 100%; padding: 10px; margin-bottom: 20px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" placeholder="Masalan: 50000">
-        <button id="calcBtn" style="padding: 12px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold;">Hisoblash va Chek chiqarish</button>
+        <h3 style="margin-top: 0; color: #333; margin-bottom: 20px;">To'lovni hisoblash</h3>
+        
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 13px; color: #666;">1 soatlik to'lov (so'm):</label>
+            <input type="number" id="hourlyRateInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-top: 5px;" placeholder="Masalan: 50000">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 13px; color: #666;">To'lov turi:</label>
+            <select id="paymentTypeSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-top: 5px; background: white;">
+                <option value="Naqd">Naqd</option>
+                <option value="Karta">Karta</option>
+            </select>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px; display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+            <input type="checkbox" id="isPaidNow" style="width: 18px; height: 18px; cursor: pointer;" checked>
+            <label for="isPaidNow" style="margin-left: 10px; font-size: 14px; cursor: pointer; color: #333;">To'lov hozir qilindi</label>
+        </div>
+
+        <button id="calcBtn" style="padding: 14px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: 0.3s;">Hisoblash va Chek chiqarish</button>
+        <button id="cancelBtn" style="margin-top: 10px; background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">Bekor qilish</button>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
+    // Bekor qilish tugmasi
+    document.getElementById('cancelBtn').onclick = () => document.body.removeChild(overlay);
+
     // "Hisoblash" tugmasi hodisasi
-    document.getElementById('calcBtn').onclick = () => {
+    document.getElementById('calcBtn').onclick = async () => {
         const rateInput = document.getElementById('hourlyRateInput').value;
+        const paymentType = document.getElementById('paymentTypeSelect').value;
+        const isPaid = document.getElementById('isPaidNow').checked; // true yoki false qaytaradi
         const hourlyRate = parseFloat(rateInput);
+        const calcBtn = document.getElementById('calcBtn');
 
         if (!hourlyRate || hourlyRate <= 0) {
-            alert("Iltimos, to'g'ri qiymat kiriting!");
+            alert("Iltimos, soatlik stavkani to'g'ri kiriting!");
             return;
         }
 
-        // 1. Summani hisoblash: (Daqiqa / 60) * Soatlik_stavka
-        // Yaxlitlash uchun Math.round dan foydalanamiz
         const summa = Math.round((data.estimatedMinutes / 60) * hourlyRate);
 
-        // 2. Chek chop etish funksiyasini chaqirish
+        calcBtn.disabled = true;
+        calcBtn.textContent = "Saqlanmoqda...";
+        calcBtn.style.background = "#6c757d";
+
+        try {
+            // Supabase-ga yuboriladigan yangi ma'lumotlar
+            const { error } = await _supabase
+                .from('partner')
+                .update({
+                    summa: summa,
+                    payment_type: paymentType, // Naqd yoki Karta
+                    is_paid: isPaid            // true yoki false
+                })
+                .eq('id', data.partnerRecordId);
+
+            if (error) throw error;
+
+        } catch (err) {
+            console.error("Xato:", err.message);
+            alert("Bazaga yozishda xatolik: " + err.message);
+            calcBtn.disabled = false;
+            calcBtn.textContent = "Hisoblash va Chek chiqarish";
+            calcBtn.style.background = "#28a745";
+            return;
+        }
+
+        // 3. Chek chop etish
         printStopReceipt({
             id: data.partnerRecordId,
             startTime: data.startTimeStr,
@@ -338,10 +392,12 @@ function showCalculationModal(data) {
             fullName: data.instructorData.full_name,
             carNumber: data.instructorData.car_number,
             estimatedMinutes: data.estimatedMinutes,
-            summa: summa
+            summa: summa,
+            paymentType: paymentType,
+            status: isPaid ? "To'landi" : "Kun oxirida"
         });
 
-        // 3. UI ni (jadvallardagi yozuvlarni) yangilash
+        // 4. UI yangilash
         document.getElementById(`stop-${data.instructorId}`).textContent = formatTime(data.stopTimeStr);
         document.getElementById(`est-${data.instructorId}`).textContent = `${data.estimatedMinutes} min`;
 
@@ -349,13 +405,13 @@ function showCalculationModal(data) {
         const oldTotal = parseFloat(totalCell.textContent) || 0;
         totalCell.textContent = `${oldTotal + data.estimatedMinutes} min`;
 
-        // 4. Tugmani dastlabki (Boshlash) holatiga qaytarish
+        // 5. Tugmani qaytarish
         data.btn.textContent = "Boshlash";
         data.btn.className = "btn-start";
         data.btn.disabled = false;
         data.btn.onclick = () => startAction(data.instructorId);
 
-        // 5. Modal oynani yopish (o'chirish)
+        // 6. Modal yopish
         document.body.removeChild(overlay);
     };
 }
@@ -445,6 +501,16 @@ function printStopReceipt(receiptData) {
             <div class="row summa-row">
                 <span class="label">SUMMA:</span> 
                 <span class="value">${receiptData.summa.toLocaleString('uz-UZ')} so'm</span>
+            </div>
+            
+            <div class="row summa-row">
+                <span class="label">To'lov turi:</span> 
+                <span class="value">${receiptData.paymentType}</span>
+            </div>
+            
+            <div class="row summa-row">
+                <span class="label">To'lov xolati:</span> 
+                <span class="value">${receiptData.status}</span>
             </div>
             
             <div class="line"></div>

@@ -583,5 +583,197 @@ async function getDailyStats() {
     document.getElementById('summa-transfer').innerText = stats["Pul o'tkazish"].sum.toLocaleString() + " so'm";
 }
 
+async function updatePartnerStats() {
+    // 1. Bugungi kunning boshlanishi va oxirini ISO formatda olish
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    try {
+        // 2. Supabase'dan bugungi ma'lumotlarni filtrlab olish
+        // 'created_at' ustuni o'rniga sizda sana qaysi ustunda bo'lsa o'shani yozing
+        const { data, error } = await _supabase
+            .from('partner')
+            .select('payment_type, summa')
+            .gte('created_at', startOfDay.toISOString())
+            .lte('created_at', endOfDay.toISOString());
+
+        if (error) throw error;
+
+        // 3. Hisoblash mantiqi
+        let naqdCount = 0;
+        let kartaCount = 0;
+        let jamiSumma = 0;
+
+        data.forEach(row => {
+            // To'lov turlarini sanash
+            if (row.payment_type === 'Naqd') {
+                naqdCount++;
+            } else if (row.payment_type === 'Karta') {
+                kartaCount++;
+            }
+
+            // Umumiy summani qo'shish
+            jamiSumma += parseFloat(row.summa || 0);
+        });
+
+        // 4. Ma'lumotlarni HTML-ga chiqarish
+        // p id="1" bo'limi (Naqd va Karta yonma-yon)
+        document.getElementById('payment-type').innerHTML = `
+            <span>Naqd: ${naqdCount}</span> | 
+            <span>Karta: ${kartaCount}</span>
+        `;
+
+        // p id="2" bo'limi (Jami summa)
+        document.getElementById('payment-summa').innerHTML = `${jamiSumma.toLocaleString()} so'm`;
+
+    } catch (err) {
+        console.error("Statistikani yuklashda xatolik:", err.message);
+    }
+}
+
+async function generatePartnerReport() {
+    const period = document.getElementById('reportPeriod').value;
+    const now = new Date();
+    let startDate = new Date();
+
+    // 1. Vaqt oralig'ini hisoblash
+    if (period === '1day') startDate.setHours(0, 0, 0, 0);
+    else if (period === '1week') startDate.setDate(now.getDate() - 7);
+    else if (period === '1month') startDate.setMonth(now.getMonth() - 1);
+    else if (period === '1year') startDate.setFullYear(now.getFullYear() - 1);
+
+    const startDateISO = startDate.toISOString();
+
+    try {
+        // 2. Hamkor instruktorlarni olish (source ustuni bo'yicha)
+        const { data: instructors, error: instError } = await _supabase
+            .from('instructors')
+            .select('id, full_name, car_number, source')
+            .not('source', 'is', null); // Hamkor bo'lmaganlarni chiqarmaymiz
+
+        if (instError) throw instError;
+
+        // 3. Partner jadvalidan cheklarni olish
+        const { data: checks, error: checkError } = await _supabase
+            .from('partner')
+            .select('*')
+            .gte('created_at', startDateISO)
+            .order('created_at', { ascending: true });
+
+        if (checkError) throw checkError;
+
+        // 4. Ma'lumotlarni chop etish uchun tayyorlash
+        let printContent = `
+            <html>
+            <head>
+                <title>Hamkor Instruktorlar Hisoboti</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; padding: 20px; color: #333; }
+                    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
+                    .instructor-section { margin-bottom: 50px; page-break-after: always; }
+                    .instructor-info { margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 5px solid #6366f1; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                    th { background-color: #f1f5f9; color: #475569; font-weight: bold; text-align: left; padding: 10px; border: 1px solid #e2e8f0; }
+                    td { padding: 8px; border: 1px solid #e2e8f0; }
+                    .row-paid { background-color: #dcfce7 !important; color: #166534; }
+                    .row-unpaid { background-color: #fee2e2 !important; color: #991b1b; }
+                    .total-box { margin-top: 15px; text-align: right; font-weight: bold; font-size: 14px; }
+                    @media print {
+                        .no-print { display: none; }
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="report-header">
+                    <h1>HAMKOR INSTRUKTORLAR HISOBOTI</h1>
+                    <p>Davr: ${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}</p>
+                </div>
+        `;
+
+        // Har bir instruktor uchun alohida jadval yaratish
+        instructors.forEach(inst => {
+            const instChecks = checks.filter(c => c.instructor_id === inst.id);
+
+            if (instChecks.length > 0) {
+                let totalSum = 0;
+                printContent += `
+                    <div class="instructor-section">
+                        <div class="instructor-info">
+                            <strong>Instruktor:</strong> ${inst.full_name} | 
+                            <strong>Mashina:</strong> ${inst.car_number} | 
+                            <strong>Hamkor ID:</strong> ${inst.source}
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>Chek ID</th>
+                                    <th>Boshlash</th>
+                                    <th>Tugash</th>
+                                    <th>Vaqt (min)</th>
+                                    <th>Summa</th>
+                                    <th>Tur</th>
+                                    <th>Holat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                instChecks.forEach((check, index) => {
+                    totalSum += (check.summa || 0);
+                    const statusClass = check.is_paid ? 'row-paid' : 'row-unpaid';
+                    const statusText = check.is_paid ? "To'langan" : "To'lanmagan";
+
+                    printContent += `
+                        <tr class="${statusClass}">
+                            <td>${index + 1}</td>
+                            <td>#${check.id}</td>
+                            <td>${new Date(check.start_time).toLocaleTimeString()}</td>
+                            <td>${check.stop_time ? new Date(check.stop_time).toLocaleTimeString() : '--:--'}</td>
+                            <td>${check.estimated_minutes || 0}</td>
+                            <td>${(check.summa || 0).toLocaleString()} so'm</td>
+                            <td>${check.payment_type || 'Noma\'lum'}</td>
+                            <td>${statusText}</td>
+                        </tr>
+                    `;
+                });
+
+                printContent += `
+                            </tbody>
+                        </table>
+                        <div class="total-box">Jami summa: ${totalSum.toLocaleString()} so'm</div>
+                    </div>
+                `;
+            }
+        });
+
+        printContent += `</body></html>`;
+
+        // 5. Yangi oynada ochish va chop etish
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        // Biroz kutib (rasm va stillar yuklanishi uchun) so'ng print oynasini ochamiz
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+
+    } catch (err) {
+        console.error("Hisobot yaratishda xato:", err);
+        alert("Hisobotni yuklashda xatolik yuz berdi!");
+    }
+}
+
+// Sahifa yuklanganda bir marta ishga tushsin
+updatePartnerStats();
+
+// Har 10 daqiqada avtomatik yangilab turish (ixtiyoriy)
+setInterval(updatePartnerStats, 10 * 60 * 1000);
+
 // Sahifa yuklanganda funksiyani ishga tushirish
 document.addEventListener('DOMContentLoaded', getDailyStats);
