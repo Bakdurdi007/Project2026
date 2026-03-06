@@ -622,8 +622,7 @@ async function updatePartnerStats() {
         // 4. Ma'lumotlarni HTML-ga chiqarish
         // p id="1" bo'limi (Naqd va Karta yonma-yon)
         document.getElementById('payment-type').innerHTML = `
-            <span>Naqd: ${naqdCount}</span> | 
-            <span>Karta: ${kartaCount}</span>
+            <span>${naqdCount + kartaCount} ta</span>
         `;
 
         // p id="2" bo'limi (Jami summa)
