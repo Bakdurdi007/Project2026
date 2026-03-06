@@ -60,7 +60,8 @@ async function fetchInstructors(searchQuery = "") {
         tbody.innerHTML = '';
 
         if (instructors.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Ma\'lumot topilmadi</td></tr>';
+            // Ustunlar soni 9 ta bo'lgani uchun colspan="9" qilib o'zgartirildi
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Ma\'lumot topilmadi</td></tr>';
             return;
         }
 
@@ -87,6 +88,7 @@ async function fetchInstructors(searchQuery = "") {
                     </button>`;
             }
 
+            // Dastlabki 8 ta ustunni joylaymiz
             tr.innerHTML = `
                 <td>${instructor.id}</td>
                 <td>${instructor.full_name}</td>
@@ -95,9 +97,22 @@ async function fetchInstructors(searchQuery = "") {
                 <td id="start-${instructor.id}">${startTimeHTML}</td> 
                 <td id="stop-${instructor.id}">--:--</td> 
                 <td id="est-${instructor.id}">--:--</td> 
-                <td id="total-${instructor.id}" style="font-weight: bold; color: #3b82f6;">${totalTime} min</td> 
+                <td id="total-${instructor.id}" style="font-weight: bold; color: #3b82f6;">${totalTime} min</td>
             `;
 
+            // 9-ustun: Jamiy chek uchun yangi TD va Button yaratish
+            const tdTotalReceipt = document.createElement('td');
+            const btnTotalReceipt = document.createElement('button');
+            btnTotalReceipt.textContent = "Kunlik Chek";
+            btnTotalReceipt.style.cssText = "padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.3s;";
+
+            // Tugmaga bosilganda oldingi javobdagi modalni chaqiradi va ma'lumotlarni berib yuboradi
+            btnTotalReceipt.onclick = () => showDailyCalculationModal(instructor.id, instructor);
+
+            tdTotalReceipt.appendChild(btnTotalReceipt);
+            tr.appendChild(tdTotalReceipt); // 9-ustunni qatorga qo'shish
+
+            // Tayyor bo'lgan qatorni jadvalga qo'shish
             tbody.appendChild(tr);
         });
 
@@ -539,6 +554,247 @@ function handleSearch() {
         const query = searchInput.value.trim();
         fetchInstructors(query); // Qidiruv so'zi bilan birga chaqiramiz
     }
+}
+
+/**
+ * Instruktor uchun kunlik umumiy hisob-kitob modalini ko'rsatish
+ */
+async function showDailyCalculationModal(instructorId, instructorData) {
+    // 1. Orqa fon (Overlay) yaratish
+    const overlay = document.createElement('div');
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999;";
+
+    // 2. Asosiy oyna (Modal)
+    const modal = document.createElement('div');
+    modal.style.cssText = "background: white; padding: 25px; border-radius: 12px; width: 340px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;";
+
+    modal.innerHTML = `
+        <h3 style="margin-top: 0; color: #333; margin-bottom: 20px;">Kunlik Umumiy To'lov</h3>
+        
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 13px; color: #666;">1 soatlik to'lov (so'm):</label>
+            <input type="number" id="dailyHourlyRateInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-top: 5px;" placeholder="Masalan: 50000">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 13px; color: #666;">To'lov turi:</label>
+            <select id="dailyPaymentTypeSelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; margin-top: 5px; background: white;">
+                <option value="Naqd">Naqd</option>
+                <option value="Karta">Karta</option>
+            </select>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px; display: flex; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+            <input type="checkbox" id="dailyIsPaidNow" style="width: 18px; height: 18px; cursor: pointer;" checked>
+            <label for="dailyIsPaidNow" style="margin-left: 10px; font-size: 14px; cursor: pointer; color: #333;">To'lov hozir qilindi</label>
+        </div>
+
+        <button id="dailyCalcBtn" style="padding: 14px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: 0.3s;">Hisoblash va Umumiy Chek chiqarish</button>
+        <button id="dailyCancelBtn" style="margin-top: 10px; background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">Bekor qilish</button>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Bekor qilish tugmasi
+    document.getElementById('dailyCancelBtn').onclick = () => document.body.removeChild(overlay);
+
+    // "Hisoblash" tugmasi hodisasi
+    document.getElementById('dailyCalcBtn').onclick = async () => {
+        const rateInput = document.getElementById('dailyHourlyRateInput').value;
+        const paymentType = document.getElementById('dailyPaymentTypeSelect').value;
+        const isPaid = document.getElementById('dailyIsPaidNow').checked;
+        const hourlyRate = parseFloat(rateInput);
+        const calcBtn = document.getElementById('dailyCalcBtn');
+
+        if (!hourlyRate || hourlyRate <= 0) {
+            alert("Iltimos, soatlik stavkani to'g'ri kiriting!");
+            return;
+        }
+
+        calcBtn.disabled = true;
+        calcBtn.textContent = "Ma'lumotlar yuklanmoqda...";
+        calcBtn.style.background = "#6c757d";
+
+        try {
+            // 1. Bugungi kun chegarasini aniqlash (Local vaqt bo'yicha)
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+
+            // 2. Supabase-dan shu instruktorning bugungi BARCHA yopilgan sessiyalarini olish
+            const { data: sessions, error } = await _supabase
+                .from('partner')
+                .select('*')
+                .eq('instructor_id', instructorId)
+                .gte('start_time', startOfToday)
+                .lte('start_time', endOfToday)
+                .not('stop_time', 'is', null); // Faqat tugatilgan sessiyalar
+
+            if (error) throw error;
+
+            if (!sessions || sessions.length === 0) {
+                alert("Bugun uchun ushbu instruktorda yopilgan sessiyalar topilmadi!");
+                calcBtn.disabled = false;
+                calcBtn.textContent = "Hisoblash va Umumiy Chek chiqarish";
+                calcBtn.style.background = "#28a745";
+                return;
+            }
+
+            // 3. Jami daqiqalarni aniq raqam ko'rinishida hisoblash
+            let calculatedTotalMinutes = 0;
+            sessions.forEach(session => {
+                // estimated_time ustunidagi qiymatni raqamga o'girib qo'shamiz
+                const duration = parseFloat(session.estimated_time || 0);
+                calculatedTotalMinutes += duration;
+            });
+
+            // Jami summani hisoblash
+            const totalSumma = Math.round((calculatedTotalMinutes / 60) * hourlyRate);
+
+            // 4. Bazada barcha sessiyalarni "To'landi" holatiga o'tkazish (agar tanlangan bo'lsa)
+            if (isPaid) {
+                calcBtn.textContent = "Saqlanmoqda...";
+                const sessionIds = sessions.map(s => s.id);
+
+                const { error: updateError } = await _supabase
+                    .from('partner')
+                    .update({
+                        summa: totalSumma, // Jami summani sessiyalarga bo'lib yozish yoki asosiysiga yozish
+                        payment_type: paymentType,
+                        is_paid: true
+                    })
+                    .in('id', sessionIds);
+
+                if (updateError) throw updateError;
+            }
+
+            // 5. Umumiy chekni chop etishga yuborish
+            // (Bu yerda avvalgi javobdagi printDailyReceipt funksiyasi chaqiriladi)
+            printDailyReceipt({
+                instructorName: instructorData.full_name,
+                carNumber: instructorData.car_number,
+                sessions: sessions,
+                totalMinutes: Math.round(calculatedTotalMinutes),
+                totalSumma: totalSumma,
+                paymentType: paymentType,
+                status: isPaid ? "To'landi" : "Kun oxirida",
+                date: new Date().toLocaleDateString('uz-UZ')
+            });
+
+            // 6. Modalni yopish va foydalanuvchini xabardor qilish
+            document.body.removeChild(overlay);
+            alert("Kunlik chek tayyorlandi!");
+
+            // Jadvalni qayta yuklash (Ixtiyoriy)
+            if (typeof fetchInstructors === "function") fetchInstructors();
+
+        } catch (err) {
+            console.error("Xato yuz berdi:", err.message);
+            alert("Xatolik: " + err.message);
+            calcBtn.disabled = false;
+            calcBtn.textContent = "Hisoblash va Umumiy Chek chiqarish";
+            calcBtn.style.background = "#28a745";
+        }
+    };
+}
+
+function printDailyReceipt(data) {
+    let sessionsHtml = '';
+
+    data.sessions.forEach((session, index) => {
+        const duration = Number(session.estimated_time || 0);
+        sessionsHtml += `
+            <div style="border-bottom: 1px dashed #000; padding: 10px 0; width: 100%;">
+                <div style="font-weight: bold; margin-bottom: 5px;">Qatnov ${index + 1}:</div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Boshlash:</span>
+                    <span>${formatFullDateTime(session.start_time)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Tugash:</span>
+                    <span>${formatFullDateTime(session.stop_time)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>Vaqt:</span>
+                    <span>${duration} min</span>
+                </div>
+            </div>
+        `;
+    });
+
+    const printContents = `
+        <div style="width: 80mm; font-family: 'Courier New', monospace; color: #000; padding: 5px; margin: 0 auto; box-sizing: border-box;">
+            <div style="text-align: center; margin-bottom: 10px;">
+                <h2 style="margin: 0; padding: 0; text-transform: uppercase; font-size: 18px;">KUNLIK UMUMIY CHEK</h2>
+                <div style="font-size: 14px;">Sana: ${data.date}</div>
+            </div>
+            
+            <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Instruktor:</span>
+                    <span style="font-weight: bold;">${data.instructorName}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Mashina:</span>
+                    <span style="font-weight: bold;">${data.carNumber}</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; font-weight: bold; margin-bottom: 5px; text-decoration: underline;">QATNOVLAR TARIXI</div>
+            
+            ${sessionsHtml}
+
+            <div style="margin-top: 15px; border-top: 2px solid #000; padding-top: 10px; line-height: 1.6;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Umumiy sarflangan vaqt:</span>
+                    <span style="font-weight: bold;">${data.totalMinutes} daqiqa</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>To'lov turi:</span>
+                    <span style="font-weight: bold;">${data.paymentType}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Holati:</span>
+                    <span style="font-weight: bold;">${data.status}</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center; border-top: 2px solid #000; padding-top: 10px;">
+                <div style="font-size: 20px; font-weight: bold;">JAMI: ${data.totalSumma.toLocaleString()} so'm</div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center; font-size: 12px; font-style: italic;">
+                Xizmatingiz uchun rahmat!
+            </div>
+        </div>
+    `;
+
+    const printWindow = window.open('', '', 'width=800,height=900');
+    printWindow.document.write('<html><head><title>Chek Chop Etish</title>');
+    printWindow.document.write('<style>body{margin:0; padding:0;} @media print { body { width: 80mm; } }</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(printContents);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+
+function formatFullDateTime(dateString) {
+    if (!dateString) return "--:--:--";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+
+    return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
