@@ -133,7 +133,6 @@ async function handleFormSubmit(e) {
         car_number: document.getElementById('carNumber').value.toUpperCase(),
         login: loginValue,
         password: document.getElementById('password').value,
-        source: document.getElementById('source').value,
         status: true,
         updated_at: new Date().toISOString()
     };
