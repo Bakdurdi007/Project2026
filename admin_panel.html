@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel - Bosh sahifa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/admin-shared.css">
     <link rel="stylesheet" href="css/admin-home.css">
 </head>
@@ -10,13 +11,35 @@
 <aside class="sidebar">
     <div class="logo">Project 2026</div>
     <nav class="menu-list">
-        <a href="admin_panel.html" class="menu-item active">Admin panel</a>
-        <a href="receipts.html" class="menu-item">Chek chiqarish</a>
-        <a href="autoschool.html" class="menu-item">Avtomaktab</a>
-        <a href="instructor.html" class="menu-item">Instruktor</a>
-        <a href="control.html" class="menu-item">Filial nazorat</a>
+        <a href="admin_panel.html" class="menu-item active">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Admin panel</span>
+        </a>
+
+        <a href="receipts.html" class="menu-item">
+            <i class="fas fa-receipt"></i>
+            <span>Chek chiqarish</span>
+        </a>
+
+        <a href="autoschool.html" class="menu-item">
+            <i class="fas fa-car"></i>
+            <span>Avtomaktab</span>
+        </a>
+
+        <a href="instructor.html" class="menu-item">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Instruktor</span>
+        </a>
+
+        <a href="control.html" class="menu-item">
+            <i class="fas fa-sitemap"></i>
+            <span>Filial nazorat</span>
+        </a>
 <!--        <a href="private.html" class="menu-item">Xususiy nazorati</a>-->
-        <a href="#" onclick="logout()" class="menu-item" style="margin-top: 50px; color: #ef4444;">Chiqish</a>
+<!--        <a href="#" onclick="logout()" class="menu-item" style="position: absolute; bottom: 20px; color: #ef4444;">Chiqish</a>-->
+        <a href="#" onclick="logout()" class="menu-item" style="position: absolute; bottom: 20px; margin-top: auto; display: flex; align-items: center; gap: 10px; color: #ef4444; text-decoration: none;">
+            <i class="fas fa-sign-out-alt"></i> <span>Chiqish</span>
+        </a>
     </nav>
 </aside>
 <main class="main-content">
