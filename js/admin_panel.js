@@ -217,7 +217,6 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
             <div class="header">
                 <h2>Filial Instruktorlari Ish Haqi Hisoboti</h2>
             </div>
-            
             <div class="info">
                 <div>
                     <strong>Oraliq:</strong> ${startDate} dan ${endDate} gacha<br>
@@ -225,6 +224,7 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
                 </div>
                 <div>
                     <strong>Chop etilgan sana:</strong> ${new Date().toLocaleDateString('uz-UZ')}
+                    <button onclick="hisobotniChopEtish()" style="padding: 10px 25px; background-color: #6366f1; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Chop etish</button>                
                 </div>
             </div>
 
@@ -247,16 +247,17 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
                 <div>Hisobot tayyorladi: <span class="sign-line"></span></div>
                 <div>Tasdiqladi: <span class="sign-line"></span></div>
             </div>
-
             <script>
-                // Oyna ochilgach avtomatik Print panelini chaqirish
-                window.onload = function() {
-                    setTimeout(() => {
-                        window.print();
-                        window.close();
-                    }, 500);
-                }
-            </script>
+    function hisobotniChopEtish() {
+        // 1. Chop etish oynasini chiqarish
+        window.print();
+
+        // 2. Chop etish tugagandan keyin (yoki bekor qilingach) oynani yopish
+        window.onafterprint = function() {
+            window.close();
+        };
+    }
+</script>
         </body>
         </html>
     `;
