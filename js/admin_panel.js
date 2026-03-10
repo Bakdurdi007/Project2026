@@ -65,260 +65,233 @@ async function updateDashboardStats() {
     }
 }
 
-async function generateReport() {
-    // Period tanlash
-    const period = document.getElementById('report-period-instructor').value;
 
-    const columnMap = {
-        '1day': { time: 'daily_minute', money: 'daily_money', label: 'Kunlik' },
-        '1week': { time: 'weekly_minute', money: 'weekly_money', label: 'Haftalik' },
-        '1month': { time: 'monthly_minute', money: 'monthly_money', label: 'Oylik' },
-        '1year': { time: 'annual_minute', money: 'annual_money', label: 'Yillik' }
-    };
 
-    const selected = columnMap[period];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Modalni ochish va yopish funksiyalari
+function openSalaryModal() {
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+
+    if (!startDate || !endDate) {
+        alert("Iltimos, avval A va B sanalarni to'liq tanlang!");
+        return;
+    }
+
+    document.getElementById('salary-modal').style.display = 'flex';
+}
+
+function closeSalaryModal() {
+    document.getElementById('salary-modal').style.display = 'none';
+    // Inputlarni tozalash (ixtiyoriy)
+    document.getElementById('min-salary-rate').value = '';
+    document.getElementById('max-salary-rate').value = '';
+}
+
+// Asosiy hisobot generatsiya qilish funksiyasi
+async function generateA4Report() {
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+    const minRate = parseFloat(document.getElementById('min-salary-rate').value);
+    const maxRate = parseFloat(document.getElementById('max-salary-rate').value);
+
+    if (isNaN(minRate) || isNaN(maxRate)) {
+        alert("Iltimos, min va max qiymatlarni to'g'ri raqamlarda kiriting!");
+        return;
+    }
+
+    // Modalni yopish va yuklanish jarayonini bildirish
+    closeSalaryModal();
+    console.log("Ma'lumotlar yuklanmoqda...");
 
     try {
-        // MA'LUMOTLARNI OLISH
-        // reports!instructor_id (...) - bu qism bazadagi instruktor_id orqali bog'lanishni aniq ko'rsatadi
-        const { data: instructors, error } = await _supabase
+        // 1. Filial instruktorlarini olib kelish
+        const { data: instructors, error: instError } = await _supabase
             .from('instructors')
-            .select(`
-                id, full_name, car_number, source,
-                reports!instructor_id (
-                    daily_minute, daily_money,
-                    weekly_minute, weekly_money,
-                    monthly_minute, monthly_money,
-                    annual_minute, annual_money,
-                    cashback_money
-                )
-            `);
+            .select('id, full_name, car_number')
+            .eq('source', 'filial');
 
+        if (instError) throw instError;
 
+        // Sana oraliqlarini to'liq kunni qamrab olishi uchun sozlash
+        const startDateTime = `${startDate}T00:00:00.000Z`;
+        const endDateTime = `${endDate}T23:59:59.999Z`;
 
-        if (error) throw error;
+        // 2. Belgilangan oraliqdagi chiptalarni olib kelish
+        const { data: tickets, error: ticketError } = await _supabase
+            .from('tickets')
+            .select('instructor_id, actual_minute, lesson_stop_time')
+            .gte('lesson_stop_time', startDateTime)
+            .lte('lesson_stop_time', endDateTime);
 
-        let tableRows = '';
-        let totalMoney = 0;
-        let totalCashback = 0;
+        if (ticketError) throw ticketError;
 
-        // Ma'lumotlarni qayta ishlash
-        instructors.forEach((inst, index) => {
-            // SQL sxemangizga ko'ra har bir instruktorda bitta report bo'ladi (Primary Key: instructor_id)
-            // Eski kodingiz:
-// const report = inst.reports?.[0] || {};
+        // 3. Ma'lumotlarni birlashtirish va hisoblash
+        const reportData = instructors.map((instructor, index) => {
+            // Shu instruktorga tegishli chiptalarni filtr qilib olish
+            const instructorTickets = tickets.filter(t => t.instructor_id === instructor.id);
 
-// O'zgartirilishi kerak bo'lgan yangi kod:
-            const rawReport = inst.reports;
-            const report = Array.isArray(rawReport) ? (rawReport[0] || {}) : (rawReport || {});
+            // Jami ishlagan minutlarni hisoblash
+            const totalMinutes = instructorTickets.reduce((sum, ticket) => sum + (ticket.actual_minute || 0), 0);
 
-            const timeValue = report[selected.time] || 0;
-            const moneyValue = parseFloat(report[selected.money] || 0);
-            const cashbackBase = parseFloat(report.cashback_money || 0);
+            // Oylikni hisoblash qoidasi
+            let salary = 0;
+            if (totalMinutes > 0 && totalMinutes <= 12000) {
+                salary = (totalMinutes / 60) * minRate;
+            } else if (totalMinutes > 12000) {
+                salary = (totalMinutes / 60) * maxRate;
+            }
 
-            // Keshbek faqat 'hamkor' uchun hisoblanadi
-            const cashbackValue = inst.source === 'hamkor' ? cashbackBase : 0;
-
-            totalMoney += moneyValue;
-            totalCashback += cashbackValue;
-
-            tableRows += `
-                <tr>
-                    <td style="text-align: center;">${index + 1}</td>
-                    <td><b>${inst.full_name || '-'}</b></td>
-                    <td style="text-align: center;">${inst.car_number || '-'}</td>
-                    <td style="text-align: center;"><span class="badge ${inst.source}">${inst.source || 'oddiy'}</span></td>
-                    <td style="text-align: center;">${timeValue} min</td>
-                    <td style="text-align: right;">${moneyValue.toLocaleString()} so'm</td>
-                    <td style="text-align: right;">${cashbackValue.toLocaleString()} so'm</td>
-                </tr>
-            `;
+            return {
+                index: index + 1,
+                fullName: instructor.full_name,
+                carNumber: instructor.car_number,
+                totalMinutes: totalMinutes,
+                salary: salary
+            };
         });
 
-        // Yashirin iframe yaratish (about:blank oynasidan qochish uchun)
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+        // 4. A4 Oynasini ochish va chop etish
+        printA4Report(reportData, startDate, endDate, minRate, maxRate);
 
-        const htmlContent = `
-            <html>
-            <head>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-                    
-                    body { 
-                        font-family: 'Inter', sans-serif; 
-                        padding: 40px; 
-                        color: #1e293b;
-                        line-height: 1.5;
-                    }
-
-                    .header-container {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: flex-start;
-                        margin-bottom: 40px;
-                        border-bottom: 2px solid #f1f5f9;
-                        padding-bottom: 20px;
-                    }
-
-                    .title-section h1 {
-                        margin: 0;
-                        font-size: 24px;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        color: #0f172a;
-                    }
-
-                    .meta-info {
-                        text-align: right;
-                        font-size: 13px;
-                        color: #64748b;
-                    }
-
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
-                        margin-top: 10px;
-                    }
-
-                    th { 
-                        background-color: #f8fafc;
-                        color: #475569;
-                        font-weight: 600;
-                        font-size: 12px;
-                        text-transform: uppercase;
-                        border-top: 1px solid #e2e8f0;
-                        border-bottom: 2px solid #e2e8f0;
-                        padding: 15px 10px;
-                    }
-
-                    td { 
-                        padding: 12px 10px;
-                        font-size: 13px;
-                        border-bottom: 1px solid #f1f5f9;
-                    }
-
-                    tr:nth-child(even) { background-color: #fcfcfc; }
-
-                    .badge {
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        font-size: 11px;
-                        font-weight: 600;
-                        text-transform: uppercase;
-                    }
-                    .hamkor { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-                    .filial { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-
-                    .summary-section {
-                        margin-top: 20px;
-                        display: flex;
-                        justify-content: flex-end;
-                    }
-
-                    .summary-table { width: 320px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
-                    .summary-table td { border: none; padding: 8px; }
-                    .total-row { font-weight: 700; font-size: 16px; color: #4f46e5; border-top: 1px solid #e2e8f0 !important; }
-
-                    .signature-section {
-                        margin-top: 60px;
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .sig-line {
-                        border-top: 1px solid #94a3b8;
-                        width: 200px;
-                        margin-top: 40px;
-                        text-align: center;
-                        font-size: 12px;
-                        color: #64748b;
-                    }
-
-                    @media print {
-                        body { padding: 0; }
-                        @page { size: A4; margin: 15mm; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header-container">
-                    <div class="title-section">
-                        <h1>Instruktorlar Hisoboti</h1>
-                        <p style="margin: 5px 0; color: #6366f1; font-weight: 600;">${selected.label.toUpperCase()} KO'RSATKICHLAR</p>
-                    </div>
-                    <div class="meta-info">
-                        <p><b>Hujjat №:</b> IR-${Date.now().toString().slice(-6)}</p>
-                        <p><b>Sana:</b> ${new Date().toLocaleDateString('uz-UZ')}</p>
-                        <p><b>Vaqt:</b> ${new Date().toLocaleTimeString('uz-UZ')}</p>
-                    </div>
-                </div>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">№</th>
-                            <th style="text-align: left;">F.I.SH</th>
-                            <th>Mashina</th>
-                            <th>Turi</th>
-                            <th>Vaqti</th>
-                            <th style="text-align: right;">Daromad</th>
-                            <th style="text-align: right;">Keshbek</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${tableRows}
-                    </tbody>
-                </table>
-
-                <div class="summary-section">
-                    <table class="summary-table">
-                        <tr>
-                            <td>Umumiy daromad:</td>
-                            <td style="text-align: right;">${totalMoney.toLocaleString()} so'm</td>
-                        </tr>
-                        <tr>
-                            <td>Umumiy keshbek:</td>
-                            <td style="text-align: right;">+ ${totalCashback.toLocaleString()} so'm</td>
-                        </tr>
-                        <tr class="total-row">
-                            <td>JAMIY SUMMA:</td>
-                            <td style="text-align: right;">${(totalMoney + totalCashback).toLocaleString()} so'm</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="signature-section">
-                    <div>
-                        <p>Mas'ul shaxs:</p>
-                        <div class="sig-line">(imzo va F.I.SH)</div>
-                    </div>
-                    <div>
-                        <p>Tasdiqlayman:</p>
-                        <div class="sig-line">M.P.</div>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
-
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(htmlContent);
-        doc.close();
-
-        // Chop etish oynasini chaqirish
-        setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            document.body.removeChild(iframe);
-        }, 600);
-
-    } catch (err) {
-        console.error("Xatolik:", err);
-        alert("Hisobot yaratishda xatolik yuz berdi. Konsolni tekshiring.");
+    } catch (error) {
+        console.error("Hisobotni yuklashda xatolik:", error);
+        alert("Ma'lumotlarni yuklashda xatolik yuz berdi.");
     }
 }
+
+// A4 Formatda chop etish oynasini tayyorlash funksiyasi
+function printA4Report(data, startDate, endDate, minRate, maxRate) {
+    const printWindow = window.open('', '_blank');
+
+    // Jadval qatorlarini HTML ko'rinishida yig'ish
+    let tableRows = '';
+    data.forEach(item => {
+        tableRows += `
+            <tr>
+                <td>${item.index}</td>
+                <td>${item.fullName || '-'}</td>
+                <td>${item.carNumber || '-'}</td>
+                <td>${item.totalMinutes} min</td>
+                <td><strong>${item.salary.toLocaleString('uz-UZ')} UZS</strong></td>
+            </tr>
+        `;
+    });
+
+    // Chop etish uchun A4 CSS va HTML strukturasi
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="uz">
+        <head>
+            <meta charset="UTF-8">
+            <title>Filial Instruktorlar Hisoboti</title>
+            <style>
+                @page { size: A4; margin: 20mm; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }
+                .header { text-align: center; margin-bottom: 20px; }
+                .header h2 { margin: 0 0 10px 0; text-transform: uppercase; }
+                .info { font-size: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+                th, td { border: 1px solid #000; padding: 8px 12px; text-align: center; }
+                th { background-color: #f3f4f6; font-weight: bold; }
+                td { text-align: center; }
+                td:nth-child(2) { text-align: left; }
+                .footer-sign { margin-top: 50px; display: flex; justify-content: space-between; font-size: 14px; }
+                .sign-line { width: 200px; border-bottom: 1px solid #000; display: inline-block; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>Filial Instruktorlari Ish Haqi Hisoboti</h2>
+            </div>
+            
+            <div class="info">
+                <div>
+                    <strong>Oraliq:</strong> ${startDate} dan ${endDate} gacha<br>
+                    <strong>Hisoblash koeffitsienti:</strong> Min: ${minRate} / Max: ${maxRate}
+                </div>
+                <div>
+                    <strong>Chop etilgan sana:</strong> ${new Date().toLocaleDateString('uz-UZ')}
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th width="5%">№</th>
+                        <th width="35%">F.I.SH</th>
+                        <th width="20%">Mashina raqami</th>
+                        <th width="15%">Ishlagan minut</th>
+                        <th width="25%">Oylik ish haqqi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+
+            <div class="footer-sign">
+                <div>Hisobot tayyorladi: <span class="sign-line"></span></div>
+                <div>Tasdiqladi: <span class="sign-line"></span></div>
+            </div>
+
+            <script>
+                // Oyna ochilgach avtomatik Print panelini chaqirish
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 500);
+                }
+            </script>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Admin table info
 async function loadAdminsReport() {
@@ -630,141 +603,6 @@ async function updatePartnerStats() {
 
     } catch (err) {
         console.error("Statistikani yuklashda xatolik:", err.message);
-    }
-}
-
-async function generatePartnerReport() {
-    const period = document.getElementById('reportPeriod').value;
-    const now = new Date();
-    let startDate = new Date();
-
-    // 1. Vaqt oralig'ini hisoblash
-    if (period === '1day') startDate.setHours(0, 0, 0, 0);
-    else if (period === '1week') startDate.setDate(now.getDate() - 7);
-    else if (period === '1month') startDate.setMonth(now.getMonth() - 1);
-    else if (period === '1year') startDate.setFullYear(now.getFullYear() - 1);
-
-    const startDateISO = startDate.toISOString();
-
-    try {
-        // 2. Hamkor instruktorlarni olish (source ustuni bo'yicha)
-        const { data: instructors, error: instError } = await _supabase
-            .from('instructors')
-            .select('id, full_name, car_number, source')
-            .not('source', 'is', null); // Hamkor bo'lmaganlarni chiqarmaymiz
-
-        if (instError) throw instError;
-
-        // 3. Partner jadvalidan cheklarni olish
-        const { data: checks, error: checkError } = await _supabase
-            .from('partner')
-            .select('*')
-            .gte('created_at', startDateISO)
-            .order('created_at', { ascending: true });
-
-        if (checkError) throw checkError;
-
-        // 4. Ma'lumotlarni chop etish uchun tayyorlash
-        let printContent = `
-            <html>
-            <head>
-                <title>Hamkor Instruktorlar Hisoboti</title>
-                <style>
-                    body { font-family: 'Arial', sans-serif; padding: 20px; color: #333; }
-                    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
-                    .instructor-section { margin-bottom: 50px; page-break-after: always; }
-                    .instructor-info { margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 5px solid #6366f1; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                    th { background-color: #f1f5f9; color: #475569; font-weight: bold; text-align: left; padding: 10px; border: 1px solid #e2e8f0; }
-                    td { padding: 8px; border: 1px solid #e2e8f0; }
-                    .row-paid { background-color: #dcfce7 !important; color: #166534; }
-                    .row-unpaid { background-color: #fee2e2 !important; color: #991b1b; }
-                    .total-box { margin-top: 15px; text-align: right; font-weight: bold; font-size: 14px; }
-                    @media print {
-                        .no-print { display: none; }
-                        body { padding: 0; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="report-header">
-                    <h1>HAMKOR INSTRUKTORLAR HISOBOTI</h1>
-                    <p>Davr: ${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}</p>
-                </div>
-        `;
-
-        // Har bir instruktor uchun alohida jadval yaratish
-        instructors.forEach(inst => {
-            const instChecks = checks.filter(c => c.instructor_id === inst.id);
-
-            if (instChecks.length > 0) {
-                let totalSum = 0;
-                printContent += `
-                    <div class="instructor-section">
-                        <div class="instructor-info">
-                            <strong>Instruktor:</strong> ${inst.full_name} | 
-                            <strong>Mashina:</strong> ${inst.car_number} | 
-                            <strong>Hamkor ID:</strong> ${inst.source}
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>№</th>
-                                    <th>Chek ID</th>
-                                    <th>Boshlash</th>
-                                    <th>Tugash</th>
-                                    <th>Vaqt (min)</th>
-                                    <th>Summa</th>
-                                    <th>Tur</th>
-                                    <th>Holat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-
-                instChecks.forEach((check, index) => {
-                    totalSum += (check.summa || 0);
-                    const statusClass = check.is_paid ? 'row-paid' : 'row-unpaid';
-                    const statusText = check.is_paid ? "To'langan" : "To'lanmagan";
-
-                    printContent += `
-                        <tr class="${statusClass}">
-                            <td>${index + 1}</td>
-                            <td>#${check.id}</td>
-                            <td>${new Date(check.start_time).toLocaleTimeString()}</td>
-                            <td>${check.stop_time ? new Date(check.stop_time).toLocaleTimeString() : '--:--'}</td>
-                            <td>${check.estimated_minutes || 0}</td>
-                            <td>${(check.summa || 0).toLocaleString()} so'm</td>
-                            <td>${check.payment_type || 'Noma\'lum'}</td>
-                            <td>${statusText}</td>
-                        </tr>
-                    `;
-                });
-
-                printContent += `
-                            </tbody>
-                        </table>
-                        <div class="total-box">Jami summa: ${totalSum.toLocaleString()} so'm</div>
-                    </div>
-                `;
-            }
-        });
-
-        printContent += `</body></html>`;
-
-        // 5. Yangi oynada ochish va chop etish
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-
-        // Biroz kutib (rasm va stillar yuklanishi uchun) so'ng print oynasini ochamiz
-        setTimeout(() => {
-            printWindow.print();
-        }, 500);
-
-    } catch (err) {
-        console.error("Hisobot yaratishda xato:", err);
-        alert("Hisobotni yuklashda xatolik yuz berdi!");
     }
 }
 

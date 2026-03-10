@@ -210,21 +210,26 @@ async function fetchMonitoringData() {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Instruktor topilmadi</td></tr>`;
     }
 
-    sortedInstructors.forEach((ins, idx) => {
+    // Faqat 'hamkor' bo'lmagan (masalan, filial) instruktorlarni ajratib olamiz
+    const filteredInstructors = sortedInstructors.filter(ins => ins.source !== 'hamkor');
+
+    filteredInstructors.forEach((ins, idx) => {
         const row = document.createElement('tr');
+
+        // Hamkorlar ro'yxatdan olib tashlangani uchun bu yerda asosan 'car-filial' bo'ladi
         const carClass = ins.source === 'hamkor' ? 'car-hamkor' : 'car-filial';
         const statusClass = ins.status ? 'status-free' : 'status-busy';
         const statusText = ins.status ? 'Bo`sh' : 'Band';
 
         row.innerHTML = `
-            <td>${idx + 1}</td>
-            <td class="fw-bold">${ins.full_name}</td>
-            <td><span class="badge-car ${carClass}">${ins.car_number}</span></td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td><span id="mon-timer-${ins.id}" class="timer-red">00:00:00</span></td>
-            <td>${!ins.status ? `<button class="btn-end-lesson" onclick="openEndLessonModal(${ins.id})">Tugatish</button>` : ''}</td>
-            <td><span style="color: #3b82f6; font-weight: bold;">${ins.status && nextTicket ? '#' + nextTicket.id : '-'}</span></td>
-        `;
+        <td>${idx + 1}</td>
+        <td class="fw-bold">${ins.full_name}</td>
+        <td><span class="badge-car ${carClass}">${ins.car_number}</span></td>
+        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        <td><span id="mon-timer-${ins.id}" class="timer-red">00:00:00</span></td>
+        <td>${!ins.status ? `<button class="btn-end-lesson" onclick="openEndLessonModal(${ins.id})">Tugatish</button>` : ''}</td>
+        <td><span style="color: #3b82f6; font-weight: bold;">${ins.status && nextTicket ? '#' + nextTicket.id : '-'}</span></td>
+    `;
         tbody.appendChild(row);
 
         const timerEl = document.getElementById(`mon-timer-${ins.id}`);
