@@ -81,7 +81,6 @@ async function updateDashboardStats() {
 
 
 
-// Modalni ochish va yopish funksiyalari
 function openSalaryModal() {
     const startDate = document.getElementById('report-start-date').value;
     const endDate = document.getElementById('report-end-date').value;
@@ -90,18 +89,46 @@ function openSalaryModal() {
         alert("Iltimos, avval A va B sanalarni to'liq tanlang!");
         return;
     }
-
     document.getElementById('salary-modal').style.display = 'flex';
 }
 
 function closeSalaryModal() {
     document.getElementById('salary-modal').style.display = 'none';
-    // Inputlarni tozalash (ixtiyoriy)
     document.getElementById('min-salary-rate').value = '';
     document.getElementById('max-salary-rate').value = '';
 }
 
-// Asosiy hisobot generatsiya qilish funksiyasi
+// 1000 talik limitni aylanib o'tib barcha cheklarni yuklab olish funksiyasi
+async function fetchAllTickets(startDateTime, endDateTime) {
+    let allTickets = [];
+    let startLimit = 0;
+    const step = 1000;
+    let hasMoreData = true;
+
+    while (hasMoreData) {
+        const { data, error } = await _supabase
+            .from('tickets')
+            .select('instructor_id, actual_minute, lesson_stop_time')
+            .gte('lesson_stop_time', startDateTime)
+            .lte('lesson_stop_time', endDateTime)
+            .range(startLimit, startLimit + step - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            allTickets = allTickets.concat(data);
+            startLimit += step;
+        }
+
+        // Agar kelgan ma'lumotlar 1000 tadan kam bo'lsa, demak oxiriga yetdik
+        if (!data || data.length < step) {
+            hasMoreData = false;
+        }
+    }
+
+    return allTickets;
+}
+
 async function generateA4Report() {
     const startDate = document.getElementById('report-start-date').value;
     const endDate = document.getElementById('report-end-date').value;
@@ -113,12 +140,17 @@ async function generateA4Report() {
         return;
     }
 
-    // Modalni yopish va yuklanish jarayonini bildirish
     closeSalaryModal();
-    console.log("Ma'lumotlar yuklanmoqda...");
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Brauzer yangi oyna ochishni blokladi. Iltimos, ruxsat bering!");
+        return;
+    }
+
+    printWindow.document.write('<h2 style="font-family: sans-serif; text-align: center; margin-top: 50px;">Ma\'lumotlar yig\'ilmoqda (2500+ cheklar tekshirilmoqda)... Iltimos kuting.</h2>');
 
     try {
-        // 1. Filial instruktorlarini olib kelish
         const { data: instructors, error: instError } = await _supabase
             .from('instructors')
             .select('id, full_name, car_number')
@@ -126,28 +158,17 @@ async function generateA4Report() {
 
         if (instError) throw instError;
 
-        // Sana oraliqlarini to'liq kunni qamrab olishi uchun sozlash
         const startDateTime = `${startDate}T00:00:00.000Z`;
         const endDateTime = `${endDate}T23:59:59.999Z`;
 
-        // 2. Belgilangan oraliqdagi chiptalarni olib kelish
-        const { data: tickets, error: ticketError } = await _supabase
-            .from('tickets')
-            .select('instructor_id, actual_minute, lesson_stop_time')
-            .gte('lesson_stop_time', startDateTime)
-            .lte('lesson_stop_time', endDateTime);
+        // Yordamchi funksiya orqali BARChA cheklarni tortib olamiz
+        const tickets = await fetchAllTickets(startDateTime, endDateTime);
 
-        if (ticketError) throw ticketError;
-
-        // 3. Ma'lumotlarni birlashtirish va hisoblash
         const reportData = instructors.map((instructor, index) => {
-            // Shu instruktorga tegishli chiptalarni filtr qilib olish
             const instructorTickets = tickets.filter(t => t.instructor_id === instructor.id);
-
-            // Jami ishlagan minutlarni hisoblash
+            // Vaqtni to'g'ridan-to'g'ri minute ustunidan olamiz
             const totalMinutes = instructorTickets.reduce((sum, ticket) => sum + (ticket.actual_minute || 0), 0);
 
-            // Oylikni hisoblash qoidasi
             let salary = 0;
             if (totalMinutes > 0 && totalMinutes <= 12000) {
                 salary = (totalMinutes / 60) * minRate;
@@ -164,20 +185,16 @@ async function generateA4Report() {
             };
         });
 
-        // 4. A4 Oynasini ochish va chop etish
-        printA4Report(reportData, startDate, endDate, minRate, maxRate);
+        printA4Report(printWindow, reportData, startDate, endDate, minRate, maxRate);
 
     } catch (error) {
         console.error("Hisobotni yuklashda xatolik:", error);
+        printWindow.close();
         alert("Ma'lumotlarni yuklashda xatolik yuz berdi.");
     }
 }
 
-// A4 Formatda chop etish oynasini tayyorlash funksiyasi
-function printA4Report(data, startDate, endDate, minRate, maxRate) {
-    const printWindow = window.open('', '_blank');
-
-    // Jadval qatorlarini HTML ko'rinishida yig'ish
+function printA4Report(printWindow, data, startDate, endDate, minRate, maxRate) {
     let tableRows = '';
     data.forEach(item => {
         tableRows += `
@@ -191,7 +208,6 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
         `;
     });
 
-    // Chop etish uchun A4 CSS va HTML strukturasi
     const htmlContent = `
         <!DOCTYPE html>
         <html lang="uz">
@@ -224,7 +240,6 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
                 </div>
                 <div>
                     <strong>Chop etilgan sana:</strong> ${new Date().toLocaleDateString('uz-UZ')}
-                    <button onclick="hisobotniChopEtish()" style="padding: 10px 25px; background-color: #6366f1; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Chop etish</button>                
                 </div>
             </div>
 
@@ -247,17 +262,15 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
                 <div>Hisobot tayyorladi: <span class="sign-line"></span></div>
                 <div>Tasdiqladi: <span class="sign-line"></span></div>
             </div>
+            
             <script>
-    function hisobotniChopEtish() {
-        // 1. Chop etish oynasini chiqarish
-        window.print();
-
-        // 2. Chop etish tugagandan keyin (yoki bekor qilingach) oynani yopish
-        window.onafterprint = function() {
-            window.close();
-        };
-    }
-</script>
+                // Oyna yuklanishi bilan to'g'ridan-to'g'ri chop etish oynasini ochish
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print();
+                    }, 500);
+                };
+            </script>
         </body>
         </html>
     `;
@@ -266,28 +279,6 @@ function printA4Report(data, startDate, endDate, minRate, maxRate) {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -346,9 +337,14 @@ async function loadAdminsReport() {
 }
 
 async function generateProfessionalReport() {
-    const periodSelect = document.getElementById('report-period');
-    const btn = document.querySelector('button[onclick="generateProfessionalReport()"]');
-    const period = periodSelect ? periodSelect.value : '1day';
+    const startDateInput = document.getElementById('ticket-start-date').value;
+    const endDateInput = document.getElementById('ticket-end-date').value;
+    const btn = document.getElementById('btn-ticket-report');
+
+    if (!startDateInput || !endDateInput) {
+        alert("Iltimos, hisobot davrini (Boshlanish va Tugash sanalarini) to'liq tanlang!");
+        return;
+    }
 
     if (btn) {
         btn.innerText = "Yuklanmoqda...";
@@ -356,27 +352,22 @@ async function generateProfessionalReport() {
     }
 
     try {
-        const now = new Date();
-        let startDate = new Date();
-        if (period === '1day') startDate.setHours(0, 0, 0, 0);
-        else if (period === '1week') startDate.setDate(now.getDate() - 7);
-        else if (period === '1month') startDate.setMonth(now.getMonth() - 1);
-        else if (period === '1year') startDate.setFullYear(now.getFullYear() - 1);
+        // Sanalarni aniq vaqt bilan sozlash (Kun boshidan kun oxirigacha)
+        const startDateTime = `${startDateInput}T00:00:00.000Z`;
+        const endDateTime = `${endDateInput}T23:59:59.999Z`;
 
-        // 1. Ma'lumotlarni parallel olish (Bog'lanishlar uchun 3 ta jadval)
-        const [centersRes, ticketsRes, instructorsRes] = await Promise.all([
-            _supabase.from('centers').select('*'),
-            _supabase.from('tickets').select('*').gte('created_at', startDate.toISOString()),
-            _supabase.from('instructors').select('*')
-        ]);
+        // 1. Ma'lumotlarni olish (Markazlar va Instruktorlarni odatiy usulda, Cheklarni esa to'liq tortib oluvchi funksiya orqali)
+        const centersRes = await _supabase.from('centers').select('*');
+        const instructorsRes = await _supabase.from('instructors').select('*');
+        const ticketsData = await fetchAllTicketsForReport(startDateTime, endDateTime);
 
         const centers = centersRes.data || [];
-        const tickets = ticketsRes.data || [];
         const instructors = instructorsRes.data || [];
+        const tickets = ticketsData || [];
 
         if (tickets.length === 0) {
-            alert("Ushbu davr uchun cheklar topilmadi.");
-            if (btn) { btn.innerText = "Hisobotni chiqarish"; btn.disabled = false; }
+            alert("Belgilangan davr uchun cheklar topilmadi.");
+            if (btn) { btn.innerText = "Hisobot"; btn.disabled = false; }
             return;
         }
 
@@ -384,9 +375,11 @@ async function generateProfessionalReport() {
 
         // 2. Hisobot HTML strukturasini qurish
         let reportHtml = `
-            <html>
+            <!DOCTYPE html>
+            <html lang="uz">
             <head>
-                <title>Professional Hisobot</title>
+                <meta charset="UTF-8">
+                <title>Chek Hisoboti</title>
                 <style>
                     body { font-family: 'Times New Roman', serif; padding: 30px; color: black; line-height: 1.4; }
                     .header { text-align: center; margin-bottom: 20px; }
@@ -400,18 +393,17 @@ async function generateProfessionalReport() {
             <body>
                 <div class="header">
                     <h1 style="margin: 0;">CHEK HISOBOTI</h1>
-                    <p style="margin: 5px 0;">Davr: <b>${periodSelect.selectedOptions[0].text}</b></p>
+                    <p style="margin: 5px 0;">Davr: <b>${startDateInput} dan ${endDateInput} gacha</b></p>
                 </div>
                 
                 <div style="font-size: 13pt; margin-bottom: 15px;">
                     <p style="margin: 3px 0;">Jami cheklar soni: <b>${tickets.length} ta</b></p>
-                    <p style="margin: 3px 0;">Umumiy tushum: <b>${totalSum.toLocaleString()} so'm</b></p>
-                    <p style="margin: 3px 0;">Sana: <b>${now.toLocaleString()}</b></p>
+                    <p style="margin: 3px 0;">Umumiy tushum: <b>${totalSum.toLocaleString('uz-UZ')} so'm</b></p>
+                    <p style="margin: 3px 0;">Chop etilgan sana: <b>${new Date().toLocaleString('uz-UZ')}</b></p>
                 </div>`;
 
         // Markazlar bo'yicha sikl
         centers.forEach(center => {
-            // tickets.center_name ustuni orqali bog'lanish
             const centerTickets = tickets.filter(t => String(t.center_name) === String(center.id));
 
             if (centerTickets.length > 0) {
@@ -420,7 +412,7 @@ async function generateProfessionalReport() {
                 reportHtml += `
                     <div class="center-info" style="page-break-inside: avoid;">
                         <p style="font-size: 12pt; margin: 5px 0;">O'quv markazi: <b>${center.name}</b></p>
-                        <p style="font-size: 11pt; margin: 5px 0;">Markaz bo'yicha: ${centerTickets.length} ta chek, ${centerSum.toLocaleString()} so'm</p>
+                        <p style="font-size: 11pt; margin: 5px 0;">Markaz bo'yicha: ${centerTickets.length} ta chek, ${centerSum.toLocaleString('uz-UZ')} so'm</p>
                         
                         <table>
                             <thead>
@@ -432,24 +424,25 @@ async function generateProfessionalReport() {
                                     <th style="width: 50px;">Min.</th>
                                     <th>Instruktor</th>
                                     <th style="width: 100px;">Summa</th>
-                                    <th style="width: 80px;">Moshina</th>
+                                    <th style="width: 80px;">Mashina</th>
                                 </tr>
                             </thead>
                             <tbody>`;
 
                 centerTickets.forEach((t, i) => {
-                    // Instruktor ma'lumotlarini bog'lash (tickets.instructor_id == instructors.id)
                     const inst = instructors.find(ins => String(ins.id) === String(t.instructor_id)) || {};
+                    const formattedDate = new Date(t.created_at).toLocaleDateString('uz-UZ');
+                    const paymentAmount = Number(t.payment_amount) || 0;
 
                     reportHtml += `
                         <tr>
                             <td style="text-align: center;">${i + 1}</td>
                             <td>${t.full_name || '—'}</td>
                             <td style="text-align: center;">${t.group || '—'}</td>
-                            <td style="text-align: center;">${new Date(t.created_at).toLocaleDateString()}</td>
+                            <td style="text-align: center;">${formattedDate}</td>
                             <td style="text-align: center;">${t.minute || 0}</td>
                             <td>${inst.full_name || '—'}</td>
-                            <td style="text-align: center;">${(Number(t.payment_amount) || 0).toLocaleString()} so'm</td>
+                            <td style="text-align: center;">${paymentAmount.toLocaleString('uz-UZ')} so'm</td>
                             <td style="text-align: center;">${inst.car_number || '—'}</td>
                         </tr>`;
                 });
@@ -459,38 +452,36 @@ async function generateProfessionalReport() {
         });
 
         reportHtml += `
-            <div style="margin-top: 40px;">
+            <div style="margin-top: 40px; display: flex; justify-content: space-between;">
                 <p>Mas'ul shaxs: _________________ (imzo)</p>
+                <p>Tasdiqladi: _________________ (imzo)</p>
             </div>
             </body></html>`;
 
-        // 3. Yangi oynada chop etish
-        // Eski iframe bo'lsa o'chirib tashlaymiz
+        // 3. Yashirin iframe orqali to'g'ridan-to'g'ri chop etish oynasini chaqirish
         const oldFrame = document.getElementById('printFrame');
         if (oldFrame) oldFrame.remove();
 
-        // Yangi yashirin iframe yaratamiz
         const iframe = document.createElement('iframe');
         iframe.id = 'printFrame';
-        iframe.style.display = 'none'; // Foydalanuvchiga ko'rinmaydi
+        iframe.style.display = 'none';
         document.body.appendChild(iframe);
 
         const pri = iframe.contentWindow;
         pri.document.open();
-        pri.document.write(reportHtml); // Hisobot mazmunini yozamiz
+        pri.document.write(reportHtml);
         pri.document.close();
 
-        // Ma'lumotlar yuklanishi bilan chop etishni boshlaymiz
+        // Oyna yuklangandan so'ng print dialogini ochish
         iframe.onload = function() {
             setTimeout(() => {
                 pri.focus();
                 pri.print();
 
-                // Chop etib bo'lingach, iframeni o'chirib yuboramiz
                 setTimeout(() => {
                     document.body.removeChild(iframe);
                     if (btn) {
-                        btn.innerText = "Hisobotni chiqarish";
+                        btn.innerText = "Hisobot";
                         btn.disabled = false;
                     }
                 }, 1000);
@@ -501,10 +492,40 @@ async function generateProfessionalReport() {
         console.error("Hisobotda xatolik:", err);
         alert("Xatolik yuz berdi: " + err.message);
         if (btn) {
-            btn.innerText = "Hisobotni chiqarish";
+            btn.innerText = "Hisobot";
             btn.disabled = false;
         }
     }
+}
+
+// Barcha cheklarni 1000 talik qismlarga bo'lib yuklab olish funksiyasi
+async function fetchAllTicketsForReport(startISO, endISO) {
+    let allTickets = [];
+    let startLimit = 0;
+    const step = 1000;
+    let hasMoreData = true;
+
+    while (hasMoreData) {
+        const { data, error } = await _supabase
+            .from('tickets')
+            .select('*')
+            .gte('created_at', startISO)
+            .lte('created_at', endISO)
+            .range(startLimit, startLimit + step - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            allTickets = allTickets.concat(data);
+            startLimit += step;
+        }
+
+        // Agar ma'lumot qolmagan bo'lsa, siklni to'xtatamiz
+        if (!data || data.length < step) {
+            hasMoreData = false;
+        }
+    }
+    return allTickets;
 }
 
 async function getDailyStats() {

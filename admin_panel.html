@@ -56,44 +56,46 @@
 
     <section class="stats-grid">
         <div class="stat-card">
-            <h3>Adminlar soni</h3>
+            <h3><i class="fa-solid fa-user-shield"></i> Adminlar soni</h3>
             <p id="count-admins">0</p>
         </div>
         <div class="stat-card">
-            <h3>Instruktorlar soni</h3>
+            <h3><i class="fa-solid fa-chalkboard-user"></i> Instruktorlar soni</h3>
             <p id="count-instructors">0</p>
         </div>
         <div class="stat-card">
-            <h3>Bugungi cheklar soni</h3>
+            <h3><i class="fa-solid fa-receipt"></i> Bugungi cheklar soni</h3>
             <p id="count-checks">0</p>
         </div>
         <div class="stat-card">
-            <h3>Bugungi cheklar summasi</h3>
+            <h3><i class="fa-solid fa-money-bill-wave"></i> Bugungi cheklar summasi</h3>
             <p id="count-money">0</p>
         </div>
     </section>
 
     <section class="stats-grid">
         <div class="stat-card">
-            <h3>NAQD PUL ORQALI TO'LOV</h3>
-            <p id="count-cash">0</p>
-            <p id="summa-cash">0</p>
+            <h3><i class="fa-solid fa-money-bill-1-wave"></i> NAQD PUL ORQALI TO'LOV</h3>
+            <p id="count-cash" class="count-text">Soni: 0</p>
+            <p id="summa-cash" class="sum-text">0</p>
         </div>
+
         <div class="stat-card">
-            <h3>KARTA ORQALI TO'LOV</h3>
-            <p id="count-card">0</p>
-            <p id="summa-card">0</p>
+            <h3><i class="fa-solid fa-credit-card"></i> KARTA ORQALI TO'LOV</h3>
+            <p id="count-card" class="count-text">Soni: 0</p>
+            <p id="summa-card" class="sum-text">0</p>
         </div>
+
         <div class="stat-card">
-            <h3>PUL O'TKAZISH YO'LI BILAN</h3>
-            <p id="count-transfer">0</p>
-            <p id="summa-transfer">0</p>
+            <h3><i class="fa-solid fa-building-columns"></i> PUL O'TKAZISH YO'LI BILAN</h3>
+            <p id="count-transfer" class="count-text">Soni: 0</p>
+            <p id="summa-transfer" class="sum-text">0</p>
         </div>
     </section>
 
     <section class="stats-grid">
         <div class="stat-card">
-            <h3>Filial Instruktorlar hisoboti</h3>
+            <h3><i class="fa-solid fa-chart-line"></i> Filial Instruktorlar hisoboti</h3>
             <div style="display: flex; width: 100%; gap: 10px; margin-top: 10px;">
                 <div style="width: 35%;">
                     <label style="font-size: 12px; color: rgb(148, 163, 184);">Boshlanish sanasi</label>
@@ -114,56 +116,27 @@
             </div>
         </div>
 
-        <div id="salary-modal"
-             style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center;">
-            <div style="background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.5);">
-                <h3 style="margin-top: 0; color: #333; text-align: center;">Oylik parametrlarini kiriting</h3>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-size: 14px; color: #555;">Min qiymat (0 - 12000 minut uchun):</label>
-                    <input type="number" id="min-salary-rate" placeholder="Masalan: 100"
-                           style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
-                </div>
-
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 14px; color: #555;">Max qiymat (> 12000 minut uchun):</label>
-                    <input type="number" id="max-salary-rate" placeholder="Masalan: 150"
-                           style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
-                </div>
-
-                <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button onclick="closeSalaryModal()"
-                            style="flex: 1; padding: 10px; background: #e5e7eb; color: #374151; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                        Bekor qilish
-                    </button>
-                    <button onclick="generateA4Report()"
-                            style="flex: 1; padding: 10px; background: #10b981; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                        OK (Hisoblash)
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="stat-card">
-            <h3>Chek hisoboti</h3>
-            <div style="display: flex; width: 100%; gap: 10px; margin-top: 20px;">
-                <div style="width: 67%;">
-                    <select id="report-period" style="width: 100%; padding: 10px; border-radius: 5px;">
-                        <option value="1day">1 kunlik hisobot</option>
-                        <option value="1week">1 haftalik hisobot</option>
-                        <option value="1month">1 oylik hisobot</option>
-                        <option value="1year">1 yillik hisobot</option>
-                    </select>
+            <h3><i class="fa-solid fa-file-invoice"></i> Chek hisoboti</h3>
+            <div style="display: flex; width: 100%; gap: 10px; margin-top: 10px;">
+                <div style="width: 35%;">
+                    <label style="font-size: 12px; color: rgb(148, 163, 184);">Boshlanish sanasi</label>
+                    <input type="date" id="ticket-start-date"
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
                 </div>
-                <div style="width: 30%;">
-                    <button onclick="generateProfessionalReport()"
-                            style="width: 100%; padding: 10px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px;">
-                        Hisoboti
+                <div style="width: 35%;">
+                    <label style="font-size: 12px; color: rgb(148, 163, 184);">Tugash sanasi</label>
+                    <input type="date" id="ticket-end-date"
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+                </div>
+                <div style="width: 30%; display: flex; align-items: flex-end;">
+                    <button onclick="generateProfessionalReport()" id="btn-ticket-report"
+                            style="width: 100%; padding: 12px; background: #6366f1; color: white; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: 0.3s;">
+                        Hisobot
                     </button>
                 </div>
             </div>
         </div>
-        <div id="report-print-section" style="display: none;"></div>
     </section>
 
     <section class="admin-report-container">
@@ -195,7 +168,26 @@
         </div>
     </section>
 </main>
+<div id="salary-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+    <div style="background: white; padding: 20px; border-radius: 8px; width: 350px;">
+        <h3 style="margin-top: 0;">Hisoblash koeffitsientlari</h3>
 
+        <div style="margin-bottom: 10px;">
+            <label style="font-size: 12px; color: gray;">Minimal stavka (12000 gacha):</label>
+            <input type="number" id="min-salary-rate" placeholder="Masalan: 1000" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-size: 12px; color: gray;">Maksimal stavka (12000 dan yuqori):</label>
+            <input type="number" id="max-salary-rate" placeholder="Masalan: 1500" style="width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closeSalaryModal()" style="flex: 1; padding: 10px; background: #e2e8f0; border: none; border-radius: 5px; cursor: pointer;">Bekor qilish</button>
+            <button onclick="generateA4Report()" style="flex: 1; padding: 10px; background: #6366f1; color: white; border: none; border-radius: 5px; cursor: pointer;">Yuklash</button>
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/admin_panel.js"></script>
