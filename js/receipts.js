@@ -189,7 +189,7 @@ receiptForm.addEventListener('submit', async (e) => {
         payment_amount: parseFloat(document.getElementById('paymentAmount').value),
         payment_type: document.getElementById('paymentType').value,
         is_active: true,
-        admin_id: localStorage.getItem('userId') || 1 // LocalStorage'dan admin ID olinadi
+        admin_id: localStorage.getItem('user_id') || 1 // LocalStorage'dan admin ID olinadi
     };
 
     const { data, error } = await _supabase
