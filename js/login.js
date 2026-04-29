@@ -1,7 +1,7 @@
 const loginForm = document.getElementById('loginForm');
 const errorDiv = document.getElementById('error-message');
 
-loginForm.addEventListener('submit', async (e) => {
+loginForm.addEventListener('submit', async (e) =>   {
     e.preventDefault();
 
     // Xatolik yozuvini yashirib turish
@@ -59,21 +59,21 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// SESSIYANI SAQLASH FUNKSIYASI
+// SESSIYANI SAQLASH FUNKSIYASI (YANGILANGAN)
 function saveSession(user, role) {
-    localStorage.clear(); // Eski qoldiqlarni tozalash
+    localStorage.clear();
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('userRole', role);
 
+    // Eng muhim qism: branch_id ni saqlaymiz
+    localStorage.setItem('branch_id', user.branch_id);
+
     if (role === 'admin') {
-        // Admin uchun eski config formatini saqlab qolamiz
         localStorage.setItem('admin_id', user.id);
-        localStorage.setItem('userName', user.admin_fullname || user.full_name);
+        localStorage.setItem('userName', user.admin_fullname);
     } else {
-        // Instruktor uchun panelga kerakli formatda saqlaymiz
-        // instructor_panel.js aynan 'instructorUser' kalitini kutadi
         localStorage.setItem('instructorUser', JSON.stringify(user));
-        localStorage.setItem('admin_id', user.id); // Id har ehtimolga qarshi
+        localStorage.setItem('admin_id', user.id);
         localStorage.setItem('userName', user.full_name);
     }
 }

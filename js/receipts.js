@@ -1,6 +1,9 @@
 // Auth tekshiruvi
 checkAuth('admin');
 
+// JORIY FILIAL ID SINI OLAMIZ (YANGI QO'SHILDI)
+const CURRENT_BRANCH_ID = localStorage.getItem('branch_id');
+
 // Elementlarni tanlab olish
 const receiptForm = document.getElementById('receiptForm');
 const ticketsTableBody = document.getElementById('ticketsTableBody');
@@ -33,7 +36,8 @@ const paymentType = document.getElementById('paymentType'); // Yangi qo'shilgan 
 async function fetchCenters() {
     const { data, error } = await _supabase
         .from('centers')
-        .select('id, name, collaboration_type, a_category, b_category, c_category, bc_category, cd_category');
+        .select('id, name, collaboration_type, a_category, b_category, c_category, bc_category, cd_category')
+        .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI: Faqat o'z filialidagi markazlar
 
     if (error) {
         console.error("Markazlarni yuklashda xatolik:", error);
@@ -132,6 +136,7 @@ async function fetchTickets() {
     const { data, error } = await _supabase
         .from('tickets')
         .select('*')
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI: Faqat o'z filialidagi cheklar
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -189,7 +194,8 @@ receiptForm.addEventListener('submit', async (e) => {
         payment_amount: parseFloat(document.getElementById('paymentAmount').value),
         payment_type: document.getElementById('paymentType').value,
         is_active: true,
-        admin_id: localStorage.getItem('admin_id') || 1 // LocalStorage'dan admin ID olinadi
+        admin_id: localStorage.getItem('admin_id') || 1, // LocalStorage'dan admin ID olinadi
+        branch_id: CURRENT_BRANCH_ID // YANGI QO'SHILDI: Chek joriy filialga bog'lanadi
     };
 
     const { data, error } = await _supabase

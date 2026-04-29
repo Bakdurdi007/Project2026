@@ -1,4 +1,5 @@
 // --- O'ZGARUVCHILAR ---
+const CURRENT_BRANCH_ID = localStorage.getItem('branch_id'); // YANGI QO'SHILDI
 const LESSON_DURATION_MINUTES = 60; // Dars davomiyligi
 let activeTimers = []; // Taymerlarni tozalash uchun
 let targetInstructorIdForEnd = null; // Tugatish uchun ID
@@ -31,6 +32,7 @@ async function fetchInstructors() {
     const { data, error } = await _supabase
         .from('instructors')
         .select('*')
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
         .order('id', { ascending: false });
 
     const tbody = document.getElementById('instructorsTableBody');
@@ -76,6 +78,7 @@ async function handleFormSubmit(e) {
         password: document.getElementById('password').value,
         source: document.getElementById('source').value,
         status: true,
+        branch_id: CURRENT_BRANCH_ID, // YANGI QO'SHILDI
         updated_at: new Date().toISOString()
     };
 
@@ -119,7 +122,11 @@ async function fetchMonitoringData() {
     const carSearchTerm = carSearchInput ? carSearchInput.value.trim() : '';
 
     // 1. Instruktorlarni olish (Barcha instruktorlar statistika uchun kerak)
-    let query = _supabase.from('instructors').select('*').order('id', { ascending: true });
+    let query = _supabase
+        .from('instructors')
+        .select('*')
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
+        .order('id', { ascending: true });
 
     const { data: allInstructors, error } = await query;
     if (error) {
@@ -149,6 +156,7 @@ async function fetchMonitoringData() {
         .from('tickets')
         .select('id')
         .eq('is_active', true)
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
         .order('id', { ascending: true })
         .limit(1).maybeSingle();
 

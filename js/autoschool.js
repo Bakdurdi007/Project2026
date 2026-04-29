@@ -1,5 +1,8 @@
 let currentDeleteId = null;
 
+// JORIY FILIAL ID SINI OLAMIZ
+const CURRENT_BRANCH_ID = localStorage.getItem('branch_id');
+
 document.addEventListener('DOMContentLoaded', () => {
     // Admin ismini chiqarish
     const adminName = localStorage.getItem('userName') || "Bakdurdi Davletov";
@@ -23,6 +26,7 @@ async function fetchCenters() {
     const { data, error } = await _supabase
         .from('centers')
         .select('*')
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -71,7 +75,8 @@ async function handleFormSubmit(e) {
     const centerData = {
         name: name,
         collaboration_type: type,
-        students_count: parseInt(count)
+        students_count: parseInt(count),
+        branch_id: CURRENT_BRANCH_ID // YANGI QO'SHILDI: Markaz filialga bog'lanadi
     };
 
     let result;
@@ -287,6 +292,7 @@ window.generateReport = async function() {
                 )
             `)
             .eq('center_name', currentReportCenterId) // Center id 'center_name' ustunida saqlangan deb hisoblaymiz
+            .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI: Faqat shu filial cheklari
             .gte('created_at', `${startDate} 00:00:00`)
             .lte('created_at', `${endDate} 23:59:59`)
             .order('created_at', { ascending: true });

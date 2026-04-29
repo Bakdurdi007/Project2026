@@ -1,5 +1,8 @@
 checkAuth('admin'); // Faqat admin ko'ra oladi
 
+// JORIY FILIAL ID SINI OLAMIZ
+const CURRENT_BRANCH_ID = localStorage.getItem('branch_id');
+
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Ismni chiqarish
     const name = localStorage.getItem('userName');
@@ -14,32 +17,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function updateDashboardStats() {
     try {
-        // Bugungi sana (00:00:00 holatida)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayISO = today.toISOString();
 
-        // 1. Adminlar soni
+        // 1. Adminlar soni (Faqat shu filial adminlari)
         const {count: adminCount} = await _supabase
             .from('admins')
-            .select('*', {count: 'exact', head: true});
+            .select('*', {count: 'exact', head: true})
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
-        // 2. Instruktorlar soni
+        // 2. Instruktorlar soni (Faqat shu filial instruktorlari)
         const {count: instructorCount} = await _supabase
             .from('instructors')
-            .select('*', {count: 'exact', head: true});
+            .select('*', {count: 'exact', head: true})
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
-        // 3. Bugungi cheklar soni
+        // 3. Bugungi cheklar soni (Faqat shu filial cheklari)
         const {count: checkCount} = await _supabase
             .from('tickets')
             .select('*', {count: 'exact', head: true})
-            .gte('created_at', todayISO);
+            .gte('created_at', todayISO)
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
-        // 4. Bugungi jami summa (payment_amount ustuni bo'yicha)
+        // 4. Bugungi jami summa (Faqat shu filial pullari)
         const {data: moneyData, error: moneyError} = await _supabase
             .from('tickets')
             .select('payment_amount')
-            .gte('created_at', todayISO);
+            .gte('created_at', todayISO)
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
         // Xatolikni tekshirish va summani hisoblash
         let totalMoney = 0;
@@ -111,6 +117,7 @@ async function fetchAllTickets(startDateTime, endDateTime) {
             .select('instructor_id, actual_minute, lesson_stop_time')
             .gte('lesson_stop_time', startDateTime)
             .lte('lesson_stop_time', endDateTime)
+            .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
             .range(startLimit, startLimit + step - 1);
 
         if (error) throw error;
@@ -154,7 +161,8 @@ async function generateA4Report() {
         const { data: instructors, error: instError } = await _supabase
             .from('instructors')
             .select('id, full_name, car_number')
-            .eq('source', 'filial');
+            .eq('source', 'filial')
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
         if (instError) throw instError;
 
@@ -286,7 +294,7 @@ function printA4Report(printWindow, data, startDate, endDate, minRate, maxRate) 
 
 
 // Admin table info
-async function loadAdminsReport() {
+async function loadAdminsReport(){
     const tbody = document.getElementById('adminsTableBody');
     if (!tbody) return;
 
@@ -296,6 +304,7 @@ async function loadAdminsReport() {
         const {data: admins, error: adminError} = await _supabase
             .from('admins')
             .select('*')
+            .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
             .order('id', {ascending: true});
 
         if (adminError) throw adminError;
@@ -539,7 +548,8 @@ async function getDailyStats() {
     const { data: tickets, error } = await _supabase
         .from('tickets')
         .select('payment_type, payment_amount')
-        .gte('created_at', startOfToday);
+        .gte('created_at', startOfToday)
+        .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
     if (error) {
         console.error("Ma'lumotlarni olishda xatolik:", error);
@@ -593,7 +603,8 @@ async function updatePartnerStats() {
             .from('partner')
             .select('payment_type, summa')
             .gte('created_at', startOfDay.toISOString())
-            .lte('created_at', endOfDay.toISOString());
+            .lte('created_at', endOfDay.toISOString())
+            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
 
         if (error) throw error;
 

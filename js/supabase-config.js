@@ -12,8 +12,9 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function checkAuth(requiredRole) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userRole = localStorage.getItem('userRole');
+    const branchId = localStorage.getItem('branch_id'); // Filialni tekshiramiz
 
-    if (!isLoggedIn || isLoggedIn !== 'true') {
+    if (!isLoggedIn || isLoggedIn !== 'true' || !branchId) {
         window.location.href = 'index.html';
         return;
     }

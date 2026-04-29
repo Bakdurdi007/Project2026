@@ -1,3 +1,6 @@
+// JORIY FILIAL ID SINI OLAMIZ
+const CURRENT_BRANCH_ID = localStorage.getItem('branch_id');
+
 document.addEventListener('DOMContentLoaded', () => {
     // Admin ismini chiqarish
     const name = localStorage.getItem('userName') || 'Admin';
@@ -63,6 +66,7 @@ async function fetchInstructors(searchTerm = '') {
     const { data, error } = await _supabase
         .from('instructors')
         .select('*')
+        .eq('branch_id', CURRENT_BRANCH_ID) // YANGI QO'SHILDI
         .order('id', { ascending: false });
 
     const tbody = document.getElementById('instructorsTableBody');
@@ -133,9 +137,10 @@ async function handleFormSubmit(e) {
         car_number: document.getElementById('carNumber').value.toUpperCase(),
         login: loginValue,
         password: document.getElementById('password').value,
-        // source: document.getElementById('source').value, o'zgartirish uchun edit.
+        source: document.getElementById('source').value, //o'zgartirish uchun edit.
         status: true,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        branch_id: CURRENT_BRANCH_ID // YANGI QO'SHILDI
     };
 
     submitBtn.disabled = true;
@@ -191,12 +196,30 @@ function openDeleteModal(id, status) {
 
 document.getElementById('confirmDeleteBtn').onclick = async () => {
     if (!deleteTargetId) return;
-    const { error } = await _supabase.from('instructors').delete().eq('id', deleteTargetId);
-    if (!error) {
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = "O'chirilmoqda...";
+
+    const { error } = await _supabase
+        .from('instructors')
+        .delete()
+        .eq('id', deleteTargetId);
+
+    if (error) {
+        // AGAR XATO BO'LSA, SABABINI CHIQARAMIZ
+        console.error("O'chirishda xatolik:", error);
+        showAlert("O'chirib bo'lmadi: " + error.message, 'error');
+        closeModal('deleteModal');
+    } else {
+        // AGAR HAMMASI YAXSHI BO'LSA
         closeModal('deleteModal');
         fetchInstructors();
-        showAlert("O'chirildi", 'success');
+        showAlert("Instruktor muvaffaqiyatli o'chirildi", 'success');
     }
+
+    btn.disabled = false;
+    btn.textContent = "Ha";
     deleteTargetId = null;
 };
 
