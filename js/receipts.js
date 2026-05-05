@@ -18,6 +18,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = localStorage.getItem('userName') || 'Admin';
     if(adminNameDisplay) adminNameDisplay.textContent = name;
 
+    // --- YANGI QO'SHILGAN QISM BOSHLANISHI ---
+    // Agar joriy filial ID si 2 ga teng bo'lsa, 45 minutlik variantni qo'shamiz
+    if (CURRENT_BRANCH_ID == 2) {
+        const newOption = document.createElement('option');
+        newOption.value = "45";
+        newOption.textContent = "0.75 soat (45 min)";
+
+        // Yangi optionni 30 minutdan keyin (ikkinchi qatorga) chiroyli qilib joylashtiramiz
+        if (hourSelect.options.length > 1) {
+            hourSelect.insertBefore(newOption, hourSelect.options[1]);
+        } else {
+            hourSelect.appendChild(newOption);
+        }
+    }
+    // --- YANGI QO'SHILGAN QISM TUGASHI ---
+
     // Ma'lumotlarni yuklash
     fetchCenters();
     fetchTickets();
