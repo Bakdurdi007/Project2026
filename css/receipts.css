@@ -29,6 +29,7 @@
     color: var(--text-main);
     border-left: 4px solid var(--primary-color);
     padding-left: 10px;
+    font-weight: bold;
 }
 
 /* Forma elementlari */
@@ -135,11 +136,10 @@ td {
 
 /* CHOP ETISH UCHUN STIL (80mm Thermal Printer) */
 .printable-area {
-    display: none; /* Sahifada ko'rinmaydi */
+    display: none;
 }
 
 @media print {
-    /* Brauzer qo'shadigan ortiqcha tepa/pastki ma'lumotlarni o'chirish */
     @page {
         margin: 0;
     }
@@ -158,9 +158,9 @@ td {
         left: 0;
         top: 0;
         width: 80mm;
-        height: auto; /* QAT'IY BALANDLIK OLIB TASHLANDI - Avtomatik moslashadi */
+        height: auto;
         padding: 5mm;
-        padding-bottom: 10mm; /* Printer qog'ozni kesishidan oldin joy qoldirish */
+        padding-bottom: 10mm;
         background: white;
         color: black;
         font-family: 'Courier New', Courier, monospace;
@@ -178,7 +178,7 @@ td {
 
     .receipt-divider {
         margin: 5px 0;
-        border-bottom: 1px dashed black; /* Ajratuvchi chiziq yaxshiroq ko'rinishi uchun */
+        border-bottom: 1px dashed black;
     }
 
     .receipt-info {
@@ -202,4 +202,43 @@ td {
         margin-top: 10px;
         text-align: center;
     }
+}
+
+/* Sahifalash (Pagination) tugmalari dizayni */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-main);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+.page-btn:hover:not(.active):not([disabled]) {
+    background: var(--hover-bg);
+}
+
+.page-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.page-btn[disabled] {
+    cursor: default;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
 }
