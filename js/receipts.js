@@ -213,6 +213,55 @@ function renderPagination() {
     });
 }
 
+// ===== TELEGRAM BOTGA XABAR YUBORISH FUNKSIYASI =====
+async function sendTelegramNotification(ticket) {
+    // Faqat 2-filial (CURRENT_BRANCH_ID == 2) uchun xabar yuboramiz
+    if (CURRENT_BRANCH_ID != 2) return;
+
+    // O'zingizning bot tokeningizni shu yerga kiriting
+    const botToken = '8882061294:AAFH25TWZH0SCOa_DtxBQHn207SNcwP5iB4';
+    const chatId = '57387793';
+
+    // Markaz ismini ID orqali aniqlab olish
+    const centerInfo = centersData.find(c => c.id == ticket.center_name);
+    const resolvedCenterName = centerInfo ? centerInfo.name : ticket.center_name;
+
+    // Xabar matnini tayyorlash (HTML formatida)
+    const textMessage = `
+🧾 <b>YANGI CHEK CHOP QILINDI</b>
+
+🆔 <b>Chek ID:</b> ${ticket.id}
+👤 <b>Mijoz:</b> ${ticket.full_name}
+🏫 <b>Markaz:</b> ${resolvedCenterName}
+🪪 <b>Toifa:</b> ${ticket.direction_category}
+👥 <b>Guruh:</b> ${ticket.group}
+⏱ <b>Dars vaqti:</b> ${ticket.minute} min
+💰 <b>To'lov miqdori:</b> ${Number(ticket.payment_amount).toLocaleString()} so'm
+💳 <b>To'lov turi:</b> ${ticket.payment_type}
+📅 <b>Sana:</b> ${new Date(ticket.created_at).toLocaleString('uz-UZ', {hour12: false})}
+    `;
+
+    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+    try {
+        await fetch(telegramApiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: textMessage,
+                parse_mode: 'HTML'
+            })
+        });
+        console.log("Telegram xabari muvaffaqiyatli yuborildi!");
+    } catch (error) {
+        console.error("Telegram xabar yuborishda xatolik:", error);
+    }
+}
+// ====================================================
+
 // Yangi chek qo'shish va saqlash
 receiptForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -245,7 +294,12 @@ receiptForm.addEventListener('submit', async (e) => {
         submitBtn.textContent = "Ma'lumotlarni saqlash hamda chek chiqarish";
     } else {
         const newTicket = data[0];
+
+        // Asosiy chop etish funksiyasini chaqirish
         printReceiptLogic(newTicket);
+
+        // TELEGRAM xabar yuborish funksiyasini chaqirish
+        sendTelegramNotification(newTicket);
 
         receiptForm.reset();
         currentPage = 1; // Yangi chek qo'shilganda ro'yxat boshi ko'rinishi uchun 1-sahifaga qaytamiz
