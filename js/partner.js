@@ -18,7 +18,8 @@ async function fetchInstructors(searchQuery = "") {
         let query = _supabase
             .from('instructors')
             .select('id, full_name, car_number')
-            .eq('source', 'hamkor');
+            .eq('source', 'hamkor')
+            .eq('branch_id', CURRENT_BRANCH_ID);
 
         if (searchQuery) {
             query = query.ilike('car_number', `%${searchQuery}%`);
@@ -34,7 +35,8 @@ async function fetchInstructors(searchQuery = "") {
             .from('partner')
             .select('id, instructor_id, start_time, stop_time, estimated_time')
             .gte('start_time', startOfToday)
-            .lte('start_time', endOfToday);
+            .lte('start_time', endOfToday)
+            .eq('branch_id', CURRENT_BRANCH_ID);
 
         if (partnerError) throw partnerError;
 
@@ -133,7 +135,11 @@ async function startAction(instructorId) {
         // 1. Partner jadvaliga yangi qator qo'shish
         const { data, error } = await _supabase
             .from('partner')
-            .insert([{ instructor_id: instructorId, start_time: startTimeStr }])
+            .insert([{
+                instructor_id: instructorId,
+                start_time: startTimeStr,
+                branch_id: CURRENT_BRANCH_ID
+            }])
             .select().single();
 
         if (error) throw error;

@@ -17,54 +17,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function updateDashboardStats() {
     try {
+        const CURRENT_ADMIN_ID = localStorage.getItem('admin_id'); // Admin ID ni olamiz
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayISO = today.toISOString();
 
-        // 1. Adminlar soni (Faqat shu filial adminlari)
+        // 1 va 2 - qadamlar o'zgarishsiz qoladi (Instruktorlar umumiy filial uchun bir xil)
         const {count: adminCount} = await _supabase
             .from('admins')
             .select('*', {count: 'exact', head: true})
-            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
+            .eq('branch_id', CURRENT_BRANCH_ID);
 
-        // 2. Instruktorlar soni (Faqat shu filial instruktorlari)
         const {count: instructorCount} = await _supabase
             .from('instructors')
             .select('*', {count: 'exact', head: true})
-            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
+            .eq('branch_id', CURRENT_BRANCH_ID);
 
-        // 3. Bugungi cheklar soni (Faqat shu filial cheklari)
+        // 3. Bugungi cheklar soni (Faqat SHU ADMIN urgan cheklar)
         const {count: checkCount} = await _supabase
             .from('tickets')
             .select('*', {count: 'exact', head: true})
             .gte('created_at', todayISO)
-            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
+            .eq('branch_id', CURRENT_BRANCH_ID)
+            .eq('admin_id', CURRENT_ADMIN_ID); // <--- Admin filtr
 
-        // 4. Bugungi jami summa (Faqat shu filial pullari)
+        // 4. Bugungi jami summa (Faqat SHU ADMIN urgan pullar)
         const {data: moneyData, error: moneyError} = await _supabase
             .from('tickets')
             .select('payment_amount')
             .gte('created_at', todayISO)
-            .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
+            .eq('branch_id', CURRENT_BRANCH_ID)
+            .eq('admin_id', CURRENT_ADMIN_ID); // <--- Admin filtr
 
-        // Xatolikni tekshirish va summani hisoblash
         let totalMoney = 0;
         if (moneyData) {
             totalMoney = moneyData.reduce((sum, item) => sum + (Number(item.payment_amount) || 0), 0);
         }
 
-        // --- Ekranga chiqarish (Faqat element mavjud bo'lsa) ---
-        if (document.getElementById('count-admins'))
-            document.getElementById('count-admins').textContent = adminCount || 0;
-
-        if (document.getElementById('count-instructors'))
-            document.getElementById('count-instructors').textContent = instructorCount || 0;
-
-        if (document.getElementById('count-checks'))
-            document.getElementById('count-checks').textContent = checkCount || 0;
-
-        if (document.getElementById('count-money'))
-            document.getElementById('count-money').textContent = totalMoney.toLocaleString() + " so'm";
+        // DOM ga yozish...
+        if (document.getElementById('count-admins')) document.getElementById('count-admins').textContent = adminCount || 0;
+        if (document.getElementById('count-instructors')) document.getElementById('count-instructors').textContent = instructorCount || 0;
+        if (document.getElementById('count-checks')) document.getElementById('count-checks').textContent = checkCount || 0;
+        if (document.getElementById('count-money')) document.getElementById('count-money').textContent = totalMoney.toLocaleString() + " so'm";
 
     } catch (err) {
         console.error("Dashboard statistikani yuklashda xato:", err);
@@ -538,18 +532,22 @@ async function fetchAllTicketsForReport(startISO, endISO) {
 }
 
 async function getDailyStats() {
-    // 1. Bugungi kunning boshlanish vaqtini aniqlash (00:00:00)
+    // 1. Tizimga kirgan adminning ID sini localStorage'dan olamiz
+    // (Login qilganda localStorage.setItem('admin_id', admin.id) qilib saqlagan bo'lishingiz kerak)
+    const CURRENT_ADMIN_ID = localStorage.getItem('admin_id');
+
+    // Bugungi kunning boshlanish vaqtini aniqlash (00:00:00)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const startOfToday = today.toISOString();
 
-    // 2. Supabase'dan faqat bugungi ma'lumotlarni tortib olish
-    // 'created_at' o'rniga o'zingizdagi sana ustuni nomini yozishingiz mumkin
+    // 2. Supabase'dan faqat BUGUNGI, shu FILIALGA va shu ADMINGA tegishli cheklarni olamiz
     const { data: tickets, error } = await _supabase
         .from('tickets')
         .select('payment_type, payment_amount')
         .gte('created_at', startOfToday)
-        .eq('branch_id', CURRENT_BRANCH_ID); // YANGI QO'SHILDI
+        .eq('branch_id', CURRENT_BRANCH_ID)
+        .eq('admin_id', CURRENT_ADMIN_ID); // <--- ENG ASOSIY QISM: Faqat shu admin urgan cheklar
 
     if (error) {
         console.error("Ma'lumotlarni olishda xatolik:", error);
@@ -565,6 +563,7 @@ async function getDailyStats() {
 
     // 4. Olingan ma'lumotlarni turlarga qarab hisoblash
     tickets.forEach(ticket => {
+        // Agar bazada turlar boshqacha yozilgan bo'lsa (masalan "naqd", "cash"), shu yerda e'tiborli bo'ling
         const type = ticket.payment_type;
         const amount = Number(ticket.payment_amount) || 0;
 
@@ -575,17 +574,19 @@ async function getDailyStats() {
     });
 
     // 5. HTML (DOM) elementlarni yangilash va raqamlarni chiroyli formatlash
-    // Naqd
-    document.getElementById('count-cash').innerText = stats["Naqd"].count + " ta";
-    document.getElementById('summa-cash').innerText = stats["Naqd"].sum.toLocaleString() + " so'm";
+    if (document.getElementById('count-cash')) {
+        // Naqd
+        document.getElementById('count-cash').textContent = `Soni: ${stats["Naqd"].count}`;
+        document.getElementById('summa-cash').textContent = `${stats["Naqd"].sum.toLocaleString()} so'm`;
 
-    // Karta
-    document.getElementById('count-card').innerText = stats["Karta"].count + " ta";
-    document.getElementById('summa-card').innerText = stats["Karta"].sum.toLocaleString() + " so'm";
+        // Karta
+        document.getElementById('count-card').textContent = `Soni: ${stats["Karta"].count}`;
+        document.getElementById('summa-card').textContent = `${stats["Karta"].sum.toLocaleString()} so'm`;
 
-    // Pul o'tkazish
-    document.getElementById('count-transfer').innerText = stats["Pul o'tkazish"].count + " ta";
-    document.getElementById('summa-transfer').innerText = stats["Pul o'tkazish"].sum.toLocaleString() + " so'm";
+        // Pul o'tkazish
+        document.getElementById('count-transfer').textContent = `Soni: ${stats["Pul o'tkazish"].count}`;
+        document.getElementById('summa-transfer').textContent = `${stats["Pul o'tkazish"].sum.toLocaleString()} so'm`;
+    }
 }
 
 async function updatePartnerStats() {
