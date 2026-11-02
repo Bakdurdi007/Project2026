@@ -1,6 +1,6 @@
 // Supabase ulanish ma'lumotlari
-//const SUPABASE_URL = 'https://wczijkqackrmzssfgdqm.supabase.co';
-//const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indjemlqa3FhY2tybXpzc2ZnZHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTk4MzksImV4cCI6MjA4NzE3NTgzOX0.ooRafiR7nR08d1f0_XEyX19AXPHRaOzjurNYw7SvZwI';
+const SUPABASE_URL = 'https://wczijkqackrmzssfgdqm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indjemlqa3FhY2tybXpzc2ZnZHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTk4MzksImV4cCI6MjA4NzE3NTgzOX0.ooRafiR7nR08d1f0_XEyX19AXPHRaOzjurNYw7SvZwI';
 //const SUPABASE_KEY = '';
 
 // 01.07.2026 09:44 Tash/////
@@ -15,19 +15,28 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 function checkAuth(requiredRole) {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userRole = localStorage.getItem('userRole');
-    const branchId = localStorage.getItem('branch_id'); // Filialni tekshiramiz
+    const branchId = localStorage.getItem('branch_id');
 
+    // 1. Umumiy tekshiruvlar
     if (!isLoggedIn || isLoggedIn !== 'true' || !branchId) {
         window.location.href = 'index.html';
         return;
     }
 
+    // 2. branch_id = 1 bo'lgan foydalanuvchilarni bloklash
+    if (String(branchId).trim() === '1') {
+        alert("Sizda ushbu tizimga kirish huquqi mavjud emas!");
+        localStorage.clear();
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 3. Rol tekshiruvi
     if (requiredRole && userRole !== requiredRole) {
-        alert("Sizda ushbu sahifaga kirish huquqi mavjud emas!");
+        alert("Server bloklangan.");
         window.location.href = 'index.html';
     }
 }
-
 // Tizimdan chiqish funksiyasi
 function logout() {
     localStorage.clear();
